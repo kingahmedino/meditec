@@ -37,6 +37,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -101,6 +102,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         if(addressList.size() > 0){
             Address address = addressList.get(0);
             Log.d(TAG, "found address " + address.toString());
+            moveCamera(new LatLng(address.getLatitude(), address.getLongitude()), DEFAULT_ZOOM, address.getAddressLine(0));
         }
     }
 
@@ -147,7 +149,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                             mCurrentLocation = (Location) task.getResult();
                             if (mCurrentLocation != null) {
                                 moveCamera(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()),
-                                        DEFAULT_ZOOM);
+                                        DEFAULT_ZOOM, "My Position");
                             } else {
                                 requestNewLocation();
                             }
@@ -175,16 +177,22 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (locationResult == null)
                     return;
                 mCurrentLocation = locationResult.getLastLocation();
-                moveCamera(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()), DEFAULT_ZOOM);
+                moveCamera(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()), DEFAULT_ZOOM, "My Position");
             }
         };
         mFusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, null);
         mFusedLocationProviderClient.removeLocationUpdates(locationCallback);
     }
 
-    private void moveCamera(LatLng latLng, float zoom) {
+    private void moveCamera(LatLng latLng, float zoom, String title) {
         Log.d(TAG, "moveCamera: moving camera to: " + latLng.latitude + " " + latLng.longitude);
         mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+        if(!title.equals("My Position")){
+            MarkerOptions options = new MarkerOptions()
+                    .position(latLng)
+                    .title(title);
+            mGoogleMap.addMarker(options);
+        }
     }
 
     private void checkIfGPSIsEnabled() {
