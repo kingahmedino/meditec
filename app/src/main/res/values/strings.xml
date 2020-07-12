@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Meditec</string>
+    <string name="search_map_hint">Search Address, City or ZipCode</string>
 </resources>

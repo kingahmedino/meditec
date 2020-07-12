@@ -10,11 +10,17 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.widget.EditText;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.ResolvableApiException;
@@ -36,7 +42,10 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
@@ -51,12 +60,48 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private Location mCurrentLocation;
     private View mMapView;
+    private EditText mSearchEditText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
         getLocationPermission();
+
+        mSearchEditText = findViewById(R.id.search_location_edit_text);
+        searchEditTextClickListener();
+    }
+
+    private void searchEditTextClickListener() {
+        mSearchEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_SEARCH
+                    || actionId == EditorInfo.IME_ACTION_DONE
+                    || event.getAction() == KeyEvent.ACTION_DOWN
+                    || event.getAction() == KeyEvent.KEYCODE_ENTER){
+                    searchForALocation();
+                }
+                return false;
+            }
+        });
+    }
+
+    private void searchForALocation() {
+        Log.d(TAG, "searching for entered location");
+        String searchText = mSearchEditText.getText().toString();
+        Geocoder geocoder = new Geocoder(MapsActivity.this);
+        List<Address> addressList = new ArrayList<>();
+        try{
+            addressList = geocoder.getFromLocationName(searchText, 1);
+        }catch (IOException e){
+            Log.d(TAG, "getSearchedLocation: IOException " + e.getMessage());
+        }
+
+        if(addressList.size() > 0){
+            Address address = addressList.get(0);
+            Log.d(TAG, "found address " + address.toString());
+        }
     }
 
     @Override
