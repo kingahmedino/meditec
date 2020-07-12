@@ -13,6 +13,8 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.ResolvableApiException;
@@ -37,7 +39,7 @@ import com.google.android.gms.tasks.Task;
 import java.util.Collections;
 
 
-public class MapsActivity extends AppCompatActivity {
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
     private static final String TAG = "MapsActivity";
     private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
     private static final String COARSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION;
@@ -48,6 +50,7 @@ public class MapsActivity extends AppCompatActivity {
     private GoogleMap mGoogleMap;
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private Location mCurrentLocation;
+    private View mMapView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,49 +59,61 @@ public class MapsActivity extends AppCompatActivity {
         getLocationPermission();
     }
 
-    private void initializeMap(){
-        Log.d(TAG, "initializeMap");
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-        mapFragment.getMapAsync(new OnMapReadyCallback() {
-            @Override
-            public void onMapReady(GoogleMap googleMap) {
-                Toast.makeText(MapsActivity.this, "Map is ready", Toast.LENGTH_SHORT).show();
-                mGoogleMap = googleMap;
-                if (mLocationPermissionGranted){
-                    checkIfGPSIsEnabled();
-                    mGoogleMap.setMyLocationEnabled(true);
-                    mGoogleMap.getUiSettings().setMyLocationButtonEnabled(false);
-                }
-            }
-        });
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        Toast.makeText(MapsActivity.this, "Map is ready", Toast.LENGTH_SHORT).show();
+        mGoogleMap = googleMap;
+        if (mLocationPermissionGranted) {
+            checkIfGPSIsEnabled();
+            mGoogleMap.setMyLocationEnabled(true);
+            mGoogleMap.getUiSettings().setMyLocationButtonEnabled(true);
+            moveLocationButtonLower();
+        }
     }
 
-    private void getDeviceLocation(){
+    private void moveLocationButtonLower() {
+        if (mMapView != null && mMapView.findViewById(Integer.parseInt("1")) != null){
+            View locationButton = ((View) mMapView.findViewById(Integer.parseInt("1")).getParent())
+                    .findViewById(Integer.parseInt("2"));
+            RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) locationButton.getLayoutParams();
+            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP, 0);
+            layoutParams.setMargins(0,140, 40, 0);
+        }
+    }
+
+    private void initializeMap() {
+        Log.d(TAG, "initializeMap");
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        mMapView = mapFragment.getView();
+        mapFragment.getMapAsync(MapsActivity.this);
+    }
+
+    private void getDeviceLocation() {
         Log.d(TAG, "getting device current location");
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         try {
-            if(mLocationPermissionGranted){
+            if (mLocationPermissionGranted) {
                 Task locationTask = mFusedLocationProviderClient.getLastLocation();
                 locationTask.addOnCompleteListener(new OnCompleteListener() {
                     @Override
                     public void onComplete(@NonNull Task task) {
-                        if(task.isSuccessful()){
-                            Log.d(TAG,"onComplete: found location");
+                        if (task.isSuccessful()) {
+                            Log.d(TAG, "onComplete: found location");
                             mCurrentLocation = (Location) task.getResult();
-                            if (mCurrentLocation != null){
+                            if (mCurrentLocation != null) {
                                 moveCamera(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()),
                                         DEFAULT_ZOOM);
-                            }else {
+                            } else {
                                 requestNewLocation();
                             }
-                        }else {
+                        } else {
                             Log.d(TAG, "onComplete: location not found");
                             Toast.makeText(MapsActivity.this, "Unable to find location", Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
             }
-        }catch (SecurityException e){
+        } catch (SecurityException e) {
             Log.d(TAG, "get device current location. SecurityException:" + e.getMessage());
         }
     }
@@ -108,11 +123,11 @@ public class MapsActivity extends AppCompatActivity {
         locationRequest.setInterval(10000);
         locationRequest.setFastestInterval(5000);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        final LocationCallback locationCallback = new LocationCallback(){
+        final LocationCallback locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(LocationResult locationResult) {
                 super.onLocationResult(locationResult);
-                if(locationResult == null)
+                if (locationResult == null)
                     return;
                 mCurrentLocation = locationResult.getLastLocation();
                 moveCamera(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()), DEFAULT_ZOOM);
@@ -122,7 +137,7 @@ public class MapsActivity extends AppCompatActivity {
         mFusedLocationProviderClient.removeLocationUpdates(locationCallback);
     }
 
-    private void moveCamera(LatLng latLng, float zoom){
+    private void moveCamera(LatLng latLng, float zoom) {
         Log.d(TAG, "moveCamera: moving camera to: " + latLng.latitude + " " + latLng.longitude);
         mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
     }
@@ -148,7 +163,7 @@ public class MapsActivity extends AppCompatActivity {
         task.addOnFailureListener(MapsActivity.this, new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-                if (e instanceof ResolvableApiException){
+                if (e instanceof ResolvableApiException) {
                     ResolvableApiException resolvableApiException = (ResolvableApiException) e;
                     try {
                         resolvableApiException.startResolutionForResult(MapsActivity.this, GPS_REQUEST_CODE);
@@ -163,10 +178,10 @@ public class MapsActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == GPS_REQUEST_CODE){
-            if (resultCode == RESULT_OK){
+        if (requestCode == GPS_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
                 getDeviceLocation();
-            }else {
+            } else {
                 Log.d(TAG, "user ignored GPS alert");
                 Toast.makeText(MapsActivity.this, "Keep your GPS enabled", Toast.LENGTH_LONG).show();
                 finish();
@@ -189,9 +204,9 @@ public class MapsActivity extends AppCompatActivity {
                 ActivityCompat.requestPermissions(this, permissions,
                         LOCATION_PERMISSION_REQUEST_CODE);
             }
-        }else {
+        } else {
             Log.d(TAG, "getting second permissions failed");
-            ActivityCompat.requestPermissions(this,permissions,
+            ActivityCompat.requestPermissions(this, permissions,
                     LOCATION_PERMISSION_REQUEST_CODE);
         }
     }
@@ -201,11 +216,11 @@ public class MapsActivity extends AppCompatActivity {
         Log.d(TAG, "onRequestPermissionsResult called !");
         mLocationPermissionGranted = false;
 
-        switch (requestCode){
+        switch (requestCode) {
             case LOCATION_PERMISSION_REQUEST_CODE:
-                if(grantResults.length > 0){
-                    for (int i = 0; i < grantResults.length; i++){
-                        if(grantResults[i] != PackageManager.PERMISSION_GRANTED){
+                if (grantResults.length > 0) {
+                    for (int i = 0; i < grantResults.length; i++) {
+                        if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
                             Log.d(TAG, "onRequestPermissionsResult failed");
                             mLocationPermissionGranted = false;
                             return;
