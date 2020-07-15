@@ -10,19 +10,18 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
-import android.location.Address;
-import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
-import android.view.inputmethod.EditorInfo;
-import android.widget.EditText;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -42,9 +41,22 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.model.AutocompletePrediction;
+import com.google.android.libraries.places.api.model.AutocompleteSessionToken;
+import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.api.model.TypeFilter;
+import com.google.android.libraries.places.api.net.FetchPhotoResponse;
+import com.google.android.libraries.places.api.net.FetchPlaceRequest;
+import com.google.android.libraries.places.api.net.FetchPlaceResponse;
+import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest;
+import com.google.android.libraries.places.api.net.FindAutocompletePredictionsResponse;
+import com.google.android.libraries.places.api.net.PlacesClient;
+import com.mancj.materialsearchbar.MaterialSearchBar;
+import com.mancj.materialsearchbar.adapter.SuggestionsAdapter;
 
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -61,7 +73,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private Location mCurrentLocation;
     private View mMapView;
-    private EditText mSearchEditText;
+    private MaterialSearchBar mSearchBar;
+    private AutocompleteSessionToken mToken;
+    private PlacesClient mPlacesClient;
+    private List<AutocompletePrediction> mPredictionList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,41 +84,136 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         setContentView(R.layout.activity_map);
         getLocationPermission();
 
-        mSearchEditText = findViewById(R.id.search_location_edit_text);
-        searchEditTextClickListener();
+        Places.initialize(getApplicationContext(), "AIzaSyBEf4eKXifD8oszcRw897rQFjRpPrS2FEw");
+        mPlacesClient = Places.createClient(this);
+        mToken = AutocompleteSessionToken.newInstance();
+        mSearchBar = findViewById(R.id.search_bar);
+        searchBarActionListener();
+        searchBarTextChangeListener();
+        searchBarSuggestionClick();
     }
 
-    private void searchEditTextClickListener() {
-        mSearchEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+    private void searchBarActionListener() {
+        mSearchBar.setOnSearchActionListener(new MaterialSearchBar.OnSearchActionListener() {
             @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == EditorInfo.IME_ACTION_SEARCH
-                    || actionId == EditorInfo.IME_ACTION_DONE
-                    || event.getAction() == KeyEvent.ACTION_DOWN
-                    || event.getAction() == KeyEvent.KEYCODE_ENTER){
-                    searchForALocation();
+            public void onSearchStateChanged(boolean enabled) {
+
+            }
+
+            @Override
+            public void onSearchConfirmed(CharSequence text) {
+                startSearch(text.toString(), true, null, true);
+            }
+
+            @Override
+            public void onButtonClicked(int buttonCode) {
+                if(buttonCode == MaterialSearchBar.BUTTON_NAVIGATION){
+                    // implement navigation drawer or something
+                }else if(buttonCode == MaterialSearchBar.BUTTON_BACK){
+                    mSearchBar.closeSearch();
                 }
-                return false;
             }
         });
     }
 
-    private void searchForALocation() {
-        Log.d(TAG, "searching for entered location");
-        String searchText = mSearchEditText.getText().toString();
-        Geocoder geocoder = new Geocoder(MapsActivity.this);
-        List<Address> addressList = new ArrayList<>();
-        try{
-            addressList = geocoder.getFromLocationName(searchText, 1);
-        }catch (IOException e){
-            Log.d(TAG, "getSearchedLocation: IOException " + e.getMessage());
-        }
+    private void searchBarTextChangeListener() {
+        mSearchBar.addTextChangeListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 
-        if(addressList.size() > 0){
-            Address address = addressList.get(0);
-            Log.d(TAG, "found address " + address.toString());
-            moveCamera(new LatLng(address.getLatitude(), address.getLongitude()), DEFAULT_ZOOM, address.getAddressLine(0));
-        }
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                final FindAutocompletePredictionsRequest predictionsRequest = FindAutocompletePredictionsRequest.builder()
+                        .setTypeFilter(TypeFilter.ADDRESS)
+                        .setSessionToken(mToken)
+                        .setQuery(s.toString())
+                        .build();
+                mPlacesClient.findAutocompletePredictions(predictionsRequest).addOnCompleteListener(
+                        new OnCompleteListener<FindAutocompletePredictionsResponse>() {
+                            @Override
+                            public void onComplete(@NonNull Task<FindAutocompletePredictionsResponse> task) {
+                                if(task.isSuccessful()){
+                                    FindAutocompletePredictionsResponse predictionsResponse = task.getResult();
+                                    if (predictionsResponse != null){
+                                        mPredictionList = predictionsResponse.getAutocompletePredictions();
+                                        List<String> suggestionList = new ArrayList<>();
+                                        for(int i = 0; i < mPredictionList.size(); i++){
+                                            AutocompletePrediction prediction = mPredictionList.get(i);
+                                            suggestionList.add(prediction.getFullText(null).toString());
+                                        }
+                                        mSearchBar.updateLastSuggestions(suggestionList);
+                                        if(!mSearchBar.isSuggestionsVisible()){
+                                            mSearchBar.showSuggestionsList();
+                                        }
+                                    }
+                                }else {
+                                    Log.d(TAG, "prediction fetching unsuccessfull");
+                                }
+                            }
+                        });
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+    }
+
+    private void searchBarSuggestionClick(){
+        mSearchBar.setSuggestionsClickListener(new SuggestionsAdapter.OnItemViewClickListener() {
+            @Override
+            public void OnItemClickListener(int position, View v) {
+                if (position >= mPredictionList.size())
+                    return;
+                AutocompletePrediction selectedPrediction = mPredictionList.get(position);
+                String suggestion = mSearchBar.getLastSuggestions().get(position).toString();
+                mSearchBar.setText(suggestion);
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        mSearchBar.clearSuggestions();
+                    }
+                }, 1000);
+                closeSoftKeyBoardForSearchBar();
+                String placeId = selectedPrediction.getPlaceId();
+                List<Place.Field> fieldList = Arrays.asList(Place.Field.NAME, Place.Field.LAT_LNG);
+                FetchPlaceRequest fetchPlaceRequest = FetchPlaceRequest.builder(placeId, fieldList).build();
+                mPlacesClient.fetchPlace(fetchPlaceRequest).addOnSuccessListener(new OnSuccessListener<FetchPlaceResponse>() {
+                    @Override
+                    public void onSuccess(FetchPlaceResponse fetchPlaceResponse) {
+                        Place place = fetchPlaceResponse.getPlace();
+                        Log.d(TAG, "Place Found: " + place.getName());
+                        moveCamera(new LatLng(place.getLatLng().latitude, place.getLatLng().longitude),
+                            DEFAULT_ZOOM, place.getName());
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        if (e instanceof ApiException){
+                            ApiException apiException = (ApiException) e;
+                            apiException.printStackTrace();
+                            int statusCode = apiException.getStatusCode();
+                            Log.d(TAG, "Place Not Found " + e.getMessage());
+                            Log.d(TAG, "Place Not Found " + statusCode);
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void OnItemDeleteListener(int position, View v) {
+
+            }
+        });
+    }
+
+    private void closeSoftKeyBoardForSearchBar() {
+        InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        if(imm != null)
+            imm.hideSoftInputFromWindow(mSearchBar.getWindowToken(), InputMethodManager.HIDE_IMPLICIT_ONLY);
     }
 
     @Override
@@ -115,6 +225,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             mGoogleMap.setMyLocationEnabled(true);
             mGoogleMap.getUiSettings().setMyLocationButtonEnabled(true);
             moveLocationButtonLower();
+            mGoogleMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
+                @Override
+                public boolean onMyLocationButtonClick() {
+                    if(mSearchBar.isSuggestionsVisible()) {
+                        mSearchBar.clearSuggestions();
+                        mSearchBar.closeSearch();
+                    }
+                    if (mSearchBar.isSearchOpened()){
+                        mSearchBar.closeSearch();
+                    }
+                    return false;
+                }
+            });
         }
     }
 
