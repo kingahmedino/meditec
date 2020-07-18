@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
@@ -21,6 +22,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
+import com.app.meditec.helpers.DownloadPlacesFromUrl;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -46,7 +48,6 @@ import com.google.android.libraries.places.api.model.AutocompletePrediction;
 import com.google.android.libraries.places.api.model.AutocompleteSessionToken;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.api.model.TypeFilter;
-import com.google.android.libraries.places.api.net.FetchPhotoResponse;
 import com.google.android.libraries.places.api.net.FetchPlaceRequest;
 import com.google.android.libraries.places.api.net.FetchPlaceResponse;
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest;
@@ -55,11 +56,15 @@ import com.google.android.libraries.places.api.net.PlacesClient;
 import com.mancj.materialsearchbar.MaterialSearchBar;
 import com.mancj.materialsearchbar.adapter.SuggestionsAdapter;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
     private static final String TAG = "MapsActivity";
@@ -68,6 +73,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public static final int LOCATION_PERMISSION_REQUEST_CODE = 102;
     public static final float DEFAULT_ZOOM = 15f;
     public static final int GPS_REQUEST_CODE = 189;
+    public static final String NEAR_BY_SEARCH_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?";
     private boolean mLocationPermissionGranted = false;
     private GoogleMap mGoogleMap;
     private FusedLocationProviderClient mFusedLocationProviderClient;
@@ -107,9 +113,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             @Override
             public void onButtonClicked(int buttonCode) {
-                if(buttonCode == MaterialSearchBar.BUTTON_NAVIGATION){
+                if (buttonCode == MaterialSearchBar.BUTTON_NAVIGATION) {
                     // implement navigation drawer or something
-                }else if(buttonCode == MaterialSearchBar.BUTTON_BACK){
+                } else if (buttonCode == MaterialSearchBar.BUTTON_BACK) {
                     mSearchBar.closeSearch();
                 }
             }
@@ -126,6 +132,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 final FindAutocompletePredictionsRequest predictionsRequest = FindAutocompletePredictionsRequest.builder()
+                        .setCountries("ng", "gh", "bj")
                         .setTypeFilter(TypeFilter.ADDRESS)
                         .setSessionToken(mToken)
                         .setQuery(s.toString())
@@ -134,21 +141,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         new OnCompleteListener<FindAutocompletePredictionsResponse>() {
                             @Override
                             public void onComplete(@NonNull Task<FindAutocompletePredictionsResponse> task) {
-                                if(task.isSuccessful()){
+                                if (task.isSuccessful()) {
                                     FindAutocompletePredictionsResponse predictionsResponse = task.getResult();
-                                    if (predictionsResponse != null){
+                                    if (predictionsResponse != null) {
                                         mPredictionList = predictionsResponse.getAutocompletePredictions();
                                         List<String> suggestionList = new ArrayList<>();
-                                        for(int i = 0; i < mPredictionList.size(); i++){
+                                        for (int i = 0; i < mPredictionList.size(); i++) {
                                             AutocompletePrediction prediction = mPredictionList.get(i);
                                             suggestionList.add(prediction.getFullText(null).toString());
                                         }
                                         mSearchBar.updateLastSuggestions(suggestionList);
-                                        if(!mSearchBar.isSuggestionsVisible()){
+                                        if (!mSearchBar.isSuggestionsVisible()) {
                                             mSearchBar.showSuggestionsList();
                                         }
                                     }
-                                }else {
+                                } else {
                                     Log.d(TAG, "prediction fetching unsuccessfull");
                                 }
                             }
@@ -162,7 +169,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
-    private void searchBarSuggestionClick(){
+    private void searchBarSuggestionClick() {
         mSearchBar.setSuggestionsClickListener(new SuggestionsAdapter.OnItemViewClickListener() {
             @Override
             public void OnItemClickListener(int position, View v) {
@@ -187,12 +194,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         Place place = fetchPlaceResponse.getPlace();
                         Log.d(TAG, "Place Found: " + place.getName());
                         moveCamera(new LatLng(place.getLatLng().latitude, place.getLatLng().longitude),
-                            DEFAULT_ZOOM, place.getName());
+                                DEFAULT_ZOOM, place.getName());
                     }
                 }).addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        if (e instanceof ApiException){
+                        if (e instanceof ApiException) {
                             ApiException apiException = (ApiException) e;
                             apiException.printStackTrace();
                             int statusCode = apiException.getStatusCode();
@@ -212,7 +219,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void closeSoftKeyBoardForSearchBar() {
         InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-        if(imm != null)
+        if (imm != null)
             imm.hideSoftInputFromWindow(mSearchBar.getWindowToken(), InputMethodManager.HIDE_IMPLICIT_ONLY);
     }
 
@@ -228,11 +235,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             mGoogleMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
                 @Override
                 public boolean onMyLocationButtonClick() {
-                    if(mSearchBar.isSuggestionsVisible()) {
+                    if (mSearchBar.isSuggestionsVisible()) {
                         mSearchBar.clearSuggestions();
                         mSearchBar.closeSearch();
                     }
-                    if (mSearchBar.isSearchOpened()){
+                    if (mSearchBar.isSearchOpened()) {
                         mSearchBar.closeSearch();
                     }
                     return false;
@@ -242,12 +249,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void moveLocationButtonLower() {
-        if (mMapView != null && mMapView.findViewById(Integer.parseInt("1")) != null){
+        if (mMapView != null && mMapView.findViewById(Integer.parseInt("1")) != null) {
             View locationButton = ((View) mMapView.findViewById(Integer.parseInt("1")).getParent())
                     .findViewById(Integer.parseInt("2"));
             RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) locationButton.getLayoutParams();
             layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP, 0);
-            layoutParams.setMargins(0,140, 40, 0);
+            layoutParams.setMargins(0, 140, 40, 0);
         }
     }
 
@@ -273,6 +280,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                             if (mCurrentLocation != null) {
                                 moveCamera(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()),
                                         DEFAULT_ZOOM, "My Position");
+                                getNearByHospitals(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
+                                Log.d(TAG, "onComplete: " + "lat: " + mCurrentLocation.getLatitude() +
+                                        " lng: "+mCurrentLocation.getLongitude());
                             } else {
                                 requestNewLocation();
                             }
@@ -301,6 +311,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     return;
                 mCurrentLocation = locationResult.getLastLocation();
                 moveCamera(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()), DEFAULT_ZOOM, "My Position");
+                getNearByHospitals(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
+                Log.d(TAG, "requestNewLocation: " + mCurrentLocation.getLatitude() + " " +
+                        mCurrentLocation.getLongitude());
             }
         };
         mFusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, null);
@@ -310,7 +323,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void moveCamera(LatLng latLng, float zoom, String title) {
         Log.d(TAG, "moveCamera: moving camera to: " + latLng.latitude + " " + latLng.longitude);
         mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
-        if(!title.equals("My Position")){
+        if (!title.equals("My Position")) {
             MarkerOptions options = new MarkerOptions()
                     .position(latLng)
                     .title(title);
@@ -407,5 +420,71 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     initializeMap();
                 }
         }
+    }
+
+    /*-----------------------  get nearby places data -----------------------*/
+    public class GetNearByPlacesData extends AsyncTask<Object, String, String> {
+        String placesData;
+        GoogleMap gMap;
+        String url;
+
+        @Override
+        protected String doInBackground(Object... objects) {
+            Log.d(TAG, "doInBackground");
+            gMap = (GoogleMap) objects[0];
+            url = (String) objects[1];
+            DownloadPlacesFromUrl downloadPlaces = new DownloadPlacesFromUrl();
+            try {
+                placesData = downloadPlaces.readUrl(url);
+                Log.i(TAG, "doInBackground: "+ placesData);
+            } catch (IOException e) {
+                Log.d(TAG, "doInBackground: "+ e.getMessage());
+            }
+            return placesData;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            Log.d(TAG, "on Post Execute");
+            try {
+                JSONObject parent = new JSONObject(s);
+                JSONArray resultArray = parent.getJSONArray("results");
+
+                for (int i = 0; i < resultArray.length(); i++) {
+                    JSONObject jsonObject = resultArray.getJSONObject(i);
+                    JSONObject locationObject = jsonObject.getJSONObject("geometry").getJSONObject("location");
+                    String latitude = locationObject.getString("lat");
+                    String longitude = locationObject.getString("lng");
+                    Log.d(TAG, "on Post Execute: " + "lat: " + latitude + " long: "+ longitude);
+
+                    JSONObject nameObject = resultArray.getJSONObject(i);
+                    String nameOfPlace = nameObject.getString("name");
+                    LatLng latLng = new LatLng(Double.parseDouble(latitude), Double.parseDouble(longitude));
+
+                    MarkerOptions markerOptions = new MarkerOptions();
+                    markerOptions.title(nameOfPlace);
+                    markerOptions.position(latLng);
+
+                    gMap.addMarker(markerOptions);
+                }
+            } catch (JSONException e) {
+                Log.d(TAG, "on Post Execute: "+ e.getMessage());
+            }
+        }
+    }
+
+    private void getNearByHospitals(double latitude, double longitude){
+        Log.d(TAG, "getNearByHospitals");
+        String url = NEAR_BY_SEARCH_URL + "location=" + latitude + "," + longitude +
+                "&radius=3000" +
+                "&type=hospital" +
+                "&key=AIzaSyBEf4eKXifD8oszcRw897rQFjRpPrS2FEw";
+        Log.d(TAG, "getNearByHospitals: " + url);
+        Object[] data = new Object[2];
+        data[0] = mGoogleMap;
+        data[1] = url;
+
+        GetNearByPlacesData getNearByPlacesData = new GetNearByPlacesData();
+        getNearByPlacesData.execute(data);
     }
 }
