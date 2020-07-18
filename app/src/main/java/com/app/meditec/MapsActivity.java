@@ -116,6 +116,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (buttonCode == MaterialSearchBar.BUTTON_NAVIGATION) {
                     // implement navigation drawer or something
                 } else if (buttonCode == MaterialSearchBar.BUTTON_BACK) {
+                    mSearchBar.clearSuggestions();
                     mSearchBar.closeSearch();
                 }
             }
@@ -183,7 +184,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     public void run() {
                         mSearchBar.clearSuggestions();
                     }
-                }, 1000);
+                }, 2000);
                 closeSoftKeyBoardForSearchBar();
                 String placeId = selectedPrediction.getPlaceId();
                 List<Place.Field> fieldList = Arrays.asList(Place.Field.NAME, Place.Field.LAT_LNG);
@@ -232,9 +233,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             mGoogleMap.setMyLocationEnabled(true);
             mGoogleMap.getUiSettings().setMyLocationButtonEnabled(true);
             moveLocationButtonLower();
+            mGoogleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+                @Override
+                public void onMapClick(LatLng latLng) {
+                    if (mSearchBar.isSuggestionsVisible()) {
+                        mSearchBar.clearSuggestions();
+                        mSearchBar.closeSearch();
+                    }
+                    if (mSearchBar.isSearchOpened())
+                        mSearchBar.closeSearch();
+                }
+            });
             mGoogleMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
                 @Override
                 public boolean onMyLocationButtonClick() {
+                    getDeviceLocation();
                     if (mSearchBar.isSuggestionsVisible()) {
                         mSearchBar.clearSuggestions();
                         mSearchBar.closeSearch();

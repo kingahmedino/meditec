@@ -34,8 +34,10 @@ public class DownloadPlacesFromUrl {
         } catch (IOException e) {
             Log.i("Download Url Tag", "read Url: " + e.getMessage());
         } finally {
-            inputStream.close();
-            httpURLConnection.disconnect();
+            if (inputStream != null){
+                inputStream.close();
+                httpURLConnection.disconnect();
+            }
         }
         return data;
     }

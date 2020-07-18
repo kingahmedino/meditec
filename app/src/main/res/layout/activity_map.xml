@@ -30,6 +30,7 @@
         app:mt_hint="@string/search_map_hint"
         app:mt_maxSuggestionsCount="10"
         app:mt_navIconEnabled="true"
+        app:mt_clearIconTint="@color/colorWhite"
         app:mt_placeholder="@string/search_map_hint"
         app:mt_speechMode="false" />
 
