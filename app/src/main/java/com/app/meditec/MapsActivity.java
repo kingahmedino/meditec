@@ -335,7 +335,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void moveCamera(LatLng latLng, float zoom, String title) {
         Log.d(TAG, "moveCamera: moving camera to: " + latLng.latitude + " " + latLng.longitude);
-        mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+        mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
         if (!title.equals("My Position")) {
             MarkerOptions options = new MarkerOptions()
                     .position(latLng)
