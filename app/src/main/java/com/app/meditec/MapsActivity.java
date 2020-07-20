@@ -23,6 +23,7 @@ import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.app.meditec.helpers.DownloadPlacesFromUrl;
+import com.app.meditec.models.PlaceInfo;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -38,6 +39,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -83,6 +85,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private AutocompleteSessionToken mToken;
     private PlacesClient mPlacesClient;
     private List<AutocompletePrediction> mPredictionList;
+    private List<PlaceInfo> mPlaceInfoList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,6 +100,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         searchBarActionListener();
         searchBarTextChangeListener();
         searchBarSuggestionClick();
+        mPlaceInfoList = new ArrayList<>();
     }
 
     private void searchBarActionListener() {
@@ -255,6 +259,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     if (mSearchBar.isSearchOpened()) {
                         mSearchBar.closeSearch();
                     }
+                    return false;
+                }
+            });
+            mGoogleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+                @Override
+                public boolean onMarkerClick(Marker marker) {
+                    Log.d(TAG, "Marker is clicked: " + marker.getTitle());
                     return false;
                 }
             });
@@ -464,21 +475,35 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 JSONArray resultArray = parent.getJSONArray("results");
 
                 for (int i = 0; i < resultArray.length(); i++) {
-                    JSONObject jsonObject = resultArray.getJSONObject(i);
-                    JSONObject locationObject = jsonObject.getJSONObject("geometry").getJSONObject("location");
+                    JSONObject mainJsonObject = resultArray.getJSONObject(i);
+                    String businessStatus = mainJsonObject.getString("business_status");
+                    Log.i(TAG, "on Post Execute Place Status: " + businessStatus);
+
+                    JSONObject geometryObject = mainJsonObject.getJSONObject("geometry");
+                    JSONObject locationObject = geometryObject.getJSONObject("location");
                     String latitude = locationObject.getString("lat");
                     String longitude = locationObject.getString("lng");
                     Log.d(TAG, "on Post Execute: " + "lat: " + latitude + " long: "+ longitude);
 
-                    JSONObject nameObject = resultArray.getJSONObject(i);
-                    String nameOfPlace = nameObject.getString("name");
+                    String nameOfPlace = mainJsonObject.getString("name");
+                    Log.i(TAG, "on Post Execute Place Name: " + nameOfPlace);
+                    String placeId = mainJsonObject.getString("place_id");
+                    Log.i(TAG, "on Post Execute Place ID: " + placeId);
+                    String address = mainJsonObject.getString("vicinity");
+                    Log.i(TAG, "on Post Execute Address: " + address);
+
+                    JSONObject openingHours = mainJsonObject.getJSONObject("opening_hours");
+                    boolean isOpen = openingHours.getBoolean("open_now");
+                    Log.i(TAG, "on Post Execute IsOpen: " + isOpen);
+
                     LatLng latLng = new LatLng(Double.parseDouble(latitude), Double.parseDouble(longitude));
 
-                    MarkerOptions markerOptions = new MarkerOptions();
-                    markerOptions.title(nameOfPlace);
-                    markerOptions.position(latLng);
-
+                    MarkerOptions markerOptions = new MarkerOptions()
+                                .title(nameOfPlace)
+                                .position(latLng);
                     gMap.addMarker(markerOptions);
+                    mPlaceInfoList.add(new PlaceInfo(nameOfPlace, placeId, address, latLng,
+                            businessStatus, isOpen));
                 }
             } catch (JSONException e) {
                 Log.d(TAG, "on Post Execute: "+ e.getMessage());
