@@ -3,6 +3,7 @@ package com.app.meditec;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -19,6 +20,7 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
@@ -55,6 +57,7 @@ import com.google.android.libraries.places.api.net.FetchPlaceResponse;
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest;
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsResponse;
 import com.google.android.libraries.places.api.net.PlacesClient;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.mancj.materialsearchbar.MaterialSearchBar;
 import com.mancj.materialsearchbar.adapter.SuggestionsAdapter;
 
@@ -86,6 +89,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private PlacesClient mPlacesClient;
     private List<AutocompletePrediction> mPredictionList;
     private List<PlaceInfo> mPlaceInfoList;
+    private ConstraintLayout mBottomSheetLayout;
+    private BottomSheetBehavior mBottomSheetBehavior;
+    private ImageView mHeaderArrow;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,6 +107,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         searchBarTextChangeListener();
         searchBarSuggestionClick();
         mPlaceInfoList = new ArrayList<>();
+        mBottomSheetLayout = findViewById(R.id.bottom_sheet);
+        mBottomSheetBehavior = BottomSheetBehavior.from(mBottomSheetLayout);
+        mHeaderArrow = findViewById(R.id.header_arrow);
+        bottomSheetBehaviourCallback();
     }
 
     private void searchBarActionListener() {
@@ -524,5 +534,20 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         GetNearByPlacesData getNearByPlacesData = new GetNearByPlacesData();
         getNearByPlacesData.execute(data);
+    }
+
+    /*-----------------------  bottom sheet -----------------------*/
+    private void bottomSheetBehaviourCallback() {
+        mBottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            @Override
+            public void onStateChanged(@NonNull View bottomSheet, int newState) {
+
+            }
+
+            @Override
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+                mHeaderArrow.setRotation(slideOffset * 180);
+            }
+        });
     }
 }
