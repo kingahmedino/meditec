@@ -22,6 +22,7 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.app.meditec.helpers.DownloadPlacesFromUrl;
@@ -92,6 +93,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private ConstraintLayout mBottomSheetLayout;
     private BottomSheetBehavior mBottomSheetBehavior;
     private ImageView mHeaderArrow;
+    private TextView mPlaceName;
+    private TextView mPlaceAddress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,7 +113,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mBottomSheetLayout = findViewById(R.id.bottom_sheet);
         mBottomSheetBehavior = BottomSheetBehavior.from(mBottomSheetLayout);
         mHeaderArrow = findViewById(R.id.header_arrow);
+        headerImageClickListener();
         bottomSheetBehaviourCallback();
+        mPlaceName = findViewById(R.id.place_name_tv);
+        mPlaceAddress = findViewById(R.id.place_address_tv);
     }
 
     private void searchBarActionListener() {
@@ -276,9 +282,23 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 @Override
                 public boolean onMarkerClick(Marker marker) {
                     Log.d(TAG, "Marker is clicked: " + marker.getTitle());
+                    Log.d(TAG, "on Marker Click: " + mPlaceInfoList.size());
+                    getPlaceDetails(marker.getPosition());
+                    if (mBottomSheetBehavior.getState() == BottomSheetBehavior.STATE_COLLAPSED)
+                        mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
                     return false;
                 }
             });
+        }
+    }
+
+    private void getPlaceDetails(LatLng position) {
+        for (PlaceInfo placeInfo : mPlaceInfoList) {
+            if (placeInfo.getLatLng().equals(position)){
+                mPlaceName.setText(placeInfo.getName());
+                mPlaceAddress.setText(placeInfo.getAddress());
+                return;
+            }
         }
     }
 
@@ -316,7 +336,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                                         DEFAULT_ZOOM, "My Position");
                                 getNearByHospitals(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
                                 Log.d(TAG, "onComplete: " + "lat: " + mCurrentLocation.getLatitude() +
-                                        " lng: "+mCurrentLocation.getLongitude());
+                                        " lng: " + mCurrentLocation.getLongitude());
                             } else {
                                 requestNewLocation();
                             }
@@ -470,9 +490,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             DownloadPlacesFromUrl downloadPlaces = new DownloadPlacesFromUrl();
             try {
                 placesData = downloadPlaces.readUrl(url);
-                Log.i(TAG, "doInBackground: "+ placesData);
+                Log.i(TAG, "doInBackground: " + placesData);
             } catch (IOException e) {
-                Log.d(TAG, "doInBackground: "+ e.getMessage());
+                Log.d(TAG, "doInBackground: " + e.getMessage());
             }
             return placesData;
         }
@@ -493,7 +513,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     JSONObject locationObject = geometryObject.getJSONObject("location");
                     String latitude = locationObject.getString("lat");
                     String longitude = locationObject.getString("lng");
-                    Log.d(TAG, "on Post Execute: " + "lat: " + latitude + " long: "+ longitude);
+                    Log.d(TAG, "on Post Execute: " + "lat: " + latitude + " long: " + longitude);
 
                     String nameOfPlace = mainJsonObject.getString("name");
                     Log.i(TAG, "on Post Execute Place Name: " + nameOfPlace);
@@ -509,19 +529,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     LatLng latLng = new LatLng(Double.parseDouble(latitude), Double.parseDouble(longitude));
 
                     MarkerOptions markerOptions = new MarkerOptions()
-                                .title(nameOfPlace)
-                                .position(latLng);
+                            .title(nameOfPlace)
+                            .position(latLng);
                     gMap.addMarker(markerOptions);
                     mPlaceInfoList.add(new PlaceInfo(nameOfPlace, placeId, address, latLng,
                             businessStatus, isOpen));
                 }
             } catch (JSONException e) {
-                Log.d(TAG, "on Post Execute: "+ e.getMessage());
+                Log.d(TAG, "on Post Execute: " + e.getMessage());
             }
         }
     }
 
-    private void getNearByHospitals(double latitude, double longitude){
+    private void getNearByHospitals(double latitude, double longitude) {
         Log.d(TAG, "getNearByHospitals");
         String url = NEAR_BY_SEARCH_URL + "location=" + latitude + "," + longitude +
                 "&radius=3000" +
@@ -547,6 +567,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void onSlide(@NonNull View bottomSheet, float slideOffset) {
                 mHeaderArrow.setRotation(slideOffset * 180);
+            }
+        });
+    }
+
+    private void headerImageClickListener() {
+        mHeaderArrow.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mBottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED)
+                    mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                else
+                    mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
             }
         });
     }
