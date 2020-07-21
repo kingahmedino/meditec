@@ -3,4 +3,9 @@
     <string name="search_map_hint">Search Address, City or ZipCode</string>
     <string name="address_of_place">Address of Place</string>
     <string name="name_of_place">Name of Place</string>
+    <string name="business_status">Business Status</string>
+    <string name="is_open">Is Open</string>
+    <string name="go">Go</string>
+    <string name="open">Open</string>
+    <string name="closed">Closed</string>
 </resources>

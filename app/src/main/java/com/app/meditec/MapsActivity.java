@@ -95,6 +95,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private ImageView mHeaderArrow;
     private TextView mPlaceName;
     private TextView mPlaceAddress;
+    private TextView mBusinessStatus;
+    private TextView mIsOpen;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -117,6 +119,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         bottomSheetBehaviourCallback();
         mPlaceName = findViewById(R.id.place_name_tv);
         mPlaceAddress = findViewById(R.id.place_address_tv);
+        mBusinessStatus = findViewById(R.id.business_status_tv);
+        mIsOpen = findViewById(R.id.is_open_tv);
     }
 
     private void searchBarActionListener() {
@@ -297,6 +301,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             if (placeInfo.getLatLng().equals(position)){
                 mPlaceName.setText(placeInfo.getName());
                 mPlaceAddress.setText(placeInfo.getAddress());
+                mBusinessStatus.setText(placeInfo.getBusinessStatus());
+                if (placeInfo.isOpenNow()) {
+                    mIsOpen.setText(R.string.open);
+                    mIsOpen.setTextColor(getResources().getColor(R.color.positiveGreen));
+                } else {
+                    mIsOpen.setText(R.string.closed);
+                    mIsOpen.setTextColor(getResources().getColor(R.color.negativeRed));
+                }
                 return;
             }
         }
@@ -544,7 +556,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void getNearByHospitals(double latitude, double longitude) {
         Log.d(TAG, "getNearByHospitals");
         String url = NEAR_BY_SEARCH_URL + "location=" + latitude + "," + longitude +
-                "&radius=3000" +
+                "&radius=1000" +
                 "&type=hospital" +
                 "&key=AIzaSyBEf4eKXifD8oszcRw897rQFjRpPrS2FEw";
         Log.d(TAG, "getNearByHospitals: " + url);
