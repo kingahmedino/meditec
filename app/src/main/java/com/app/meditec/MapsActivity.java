@@ -287,16 +287,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 public boolean onMarkerClick(Marker marker) {
                     Log.d(TAG, "Marker is clicked: " + marker.getTitle());
                     Log.d(TAG, "on Marker Click: " + mPlaceInfoList.size());
-                    getPlaceDetails(marker.getPosition());
-                    if (mBottomSheetBehavior.getState() == BottomSheetBehavior.STATE_COLLAPSED)
-                        mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                    boolean isPlaceInList = getPlaceDetails(marker.getPosition());
+                    if(isPlaceInList) {
+                        if (mBottomSheetBehavior.getState() == BottomSheetBehavior.STATE_COLLAPSED)
+                            mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                    }
                     return false;
                 }
             });
         }
     }
 
-    private void getPlaceDetails(LatLng position) {
+    private boolean getPlaceDetails(LatLng position) {
         for (PlaceInfo placeInfo : mPlaceInfoList) {
             if (placeInfo.getLatLng().equals(position)){
                 mPlaceName.setText(placeInfo.getName());
@@ -309,9 +311,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     mIsOpen.setText(R.string.closed);
                     mIsOpen.setTextColor(getResources().getColor(R.color.negativeRed));
                 }
-                return;
+                return true;
             }
         }
+        return false;
     }
 
     private void moveLocationButtonLower() {
