@@ -89,7 +89,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private AutocompleteSessionToken mToken;
     private PlacesClient mPlacesClient;
     private List<AutocompletePrediction> mPredictionList;
-    private List<PlaceInfo> mPlaceInfoList;
+    private static List<PlaceInfo> mPlaceInfoList;
     private ConstraintLayout mBottomSheetLayout;
     private BottomSheetBehavior mBottomSheetBehavior;
     private ImageView mHeaderArrow;
@@ -288,7 +288,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     Log.d(TAG, "Marker is clicked: " + marker.getTitle());
                     Log.d(TAG, "on Marker Click: " + mPlaceInfoList.size());
                     boolean isPlaceInList = getPlaceDetails(marker.getPosition());
-                    if(isPlaceInList) {
+                    if (isPlaceInList) {
                         if (mBottomSheetBehavior.getState() == BottomSheetBehavior.STATE_COLLAPSED)
                             mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
                     }
@@ -300,7 +300,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private boolean getPlaceDetails(LatLng position) {
         for (PlaceInfo placeInfo : mPlaceInfoList) {
-            if (placeInfo.getLatLng().equals(position)){
+            if (placeInfo.getLatLng().equals(position)) {
                 mPlaceName.setText(placeInfo.getName());
                 mPlaceAddress.setText(placeInfo.getAddress());
                 mBusinessStatus.setText(placeInfo.getBusinessStatus());
@@ -492,10 +492,23 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     /*-----------------------  get nearby places data -----------------------*/
-    public class GetNearByPlacesData extends AsyncTask<Object, String, String> {
+    public static class GetNearByPlacesData extends AsyncTask<Object, String, String> {
         String placesData;
         GoogleMap gMap;
         String url;
+        private String mBusinessStatus;
+        private JSONObject mGeometryObject;
+        private JSONObject mLocationObject;
+        private String mLatitude;
+        private String mLongitude;
+        private String mNameOfPlace;
+        private String mPlaceId;
+        private JSONObject mOpeningHours;
+        private boolean mIsOpen;
+        private LatLng mLatLng;
+        private JSONObject mMainJsonObject;
+        private String mAddress;
+        private MarkerOptions mMarkerOptions;
 
         @Override
         protected String doInBackground(Object... objects) {
@@ -518,40 +531,38 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             try {
                 JSONObject parent = new JSONObject(s);
                 JSONArray resultArray = parent.getJSONArray("results");
+                Log.d(TAG, "on Post Execute: " + resultArray.length());
 
                 for (int i = 0; i < resultArray.length(); i++) {
-                    JSONObject mainJsonObject = resultArray.getJSONObject(i);
-                    String businessStatus = mainJsonObject.getString("business_status");
-                    Log.i(TAG, "on Post Execute Place Status: " + businessStatus);
+                    mMainJsonObject = resultArray.getJSONObject(i);
+                    Log.i(TAG, "on Post Execute Place Status: " + mMainJsonObject.toString());
+                    mBusinessStatus = mMainJsonObject.getString("business_status");
 
-                    JSONObject geometryObject = mainJsonObject.getJSONObject("geometry");
-                    JSONObject locationObject = geometryObject.getJSONObject("location");
-                    String latitude = locationObject.getString("lat");
-                    String longitude = locationObject.getString("lng");
-                    Log.d(TAG, "on Post Execute: " + "lat: " + latitude + " long: " + longitude);
+                    mGeometryObject = mMainJsonObject.getJSONObject("geometry");
+                    mLocationObject = mGeometryObject.getJSONObject("location");
+                    mLatitude = mLocationObject.getString("lat");
+                    mLongitude = mLocationObject.getString("lng");
 
-                    String nameOfPlace = mainJsonObject.getString("name");
-                    Log.i(TAG, "on Post Execute Place Name: " + nameOfPlace);
-                    String placeId = mainJsonObject.getString("place_id");
-                    Log.i(TAG, "on Post Execute Place ID: " + placeId);
-                    String address = mainJsonObject.getString("vicinity");
-                    Log.i(TAG, "on Post Execute Address: " + address);
+                    mNameOfPlace = mMainJsonObject.getString("name");
+                    mPlaceId = mMainJsonObject.getString("place_id");
+                    mAddress = mMainJsonObject.getString("vicinity");
 
-                    JSONObject openingHours = mainJsonObject.getJSONObject("opening_hours");
-                    boolean isOpen = openingHours.getBoolean("open_now");
-                    Log.i(TAG, "on Post Execute IsOpen: " + isOpen);
+                    if (!mMainJsonObject.isNull("opening_hours")) {
+                        mOpeningHours = mMainJsonObject.getJSONObject("opening_hours");
+                        mIsOpen = mOpeningHours.getBoolean("open_now");
+                    }
 
-                    LatLng latLng = new LatLng(Double.parseDouble(latitude), Double.parseDouble(longitude));
+                    mLatLng = new LatLng(Double.parseDouble(mLatitude), Double.parseDouble(mLongitude));
 
-                    MarkerOptions markerOptions = new MarkerOptions()
-                            .title(nameOfPlace)
-                            .position(latLng);
-                    gMap.addMarker(markerOptions);
-                    mPlaceInfoList.add(new PlaceInfo(nameOfPlace, placeId, address, latLng,
-                            businessStatus, isOpen));
+                    mMarkerOptions = new MarkerOptions()
+                            .title(mNameOfPlace)
+                            .position(mLatLng);
+                    gMap.addMarker(mMarkerOptions);
+                    mPlaceInfoList.add(new PlaceInfo(mNameOfPlace, mPlaceId, mAddress, mLatLng,
+                            mBusinessStatus, mIsOpen));
                 }
             } catch (JSONException e) {
-                Log.d(TAG, "on Post Execute: " + e.getMessage());
+                Log.d(TAG, "on Post Execute Error: " + e.getMessage());
             }
         }
     }
