@@ -104,7 +104,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         setContentView(R.layout.activity_map);
         getLocationPermission();
 
-        Places.initialize(getApplicationContext(), "AIzaSyBEf4eKXifD8oszcRw897rQFjRpPrS2FEw");
+        Places.initialize(getApplicationContext(), getString(R.string.google_maps_api_key));
         mPlacesClient = Places.createClient(this);
         mToken = AutocompleteSessionToken.newInstance();
         mSearchBar = findViewById(R.id.search_bar);
