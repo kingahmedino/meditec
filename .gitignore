@@ -1,1 +1,3 @@
-"**/*/res/values/secrets.xml" 
+"**/*/res/values/secrets.xml"
+local.properties
+gradle.properties
