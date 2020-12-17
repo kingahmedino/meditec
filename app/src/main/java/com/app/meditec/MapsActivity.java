@@ -26,6 +26,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.app.meditec.helpers.DownloadPlacesFromUrl;
+import com.app.meditec.helpers.PlaceInfoResponse;
 import com.app.meditec.models.PlaceInfo;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
@@ -59,6 +60,7 @@ import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRe
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsResponse;
 import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.gson.Gson;
 import com.mancj.materialsearchbar.MaterialSearchBar;
 import com.mancj.materialsearchbar.adapter.SuggestionsAdapter;
 
@@ -300,11 +302,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private boolean getPlaceDetails(LatLng position) {
         for (PlaceInfo placeInfo : mPlaceInfoList) {
-            if (placeInfo.getLatLng().equals(position)) {
+            LatLng place = new LatLng(placeInfo.getGeometry().getLocation().getLat(),
+                    placeInfo.getGeometry().getLocation().getLng());
+            if (place.equals(position)) {
                 mPlaceName.setText(placeInfo.getName());
-                mPlaceAddress.setText(placeInfo.getAddress());
-                mBusinessStatus.setText(placeInfo.getBusinessStatus());
-                if (placeInfo.isOpenNow()) {
+                mPlaceAddress.setText(placeInfo.getVicinity());
+                mBusinessStatus.setText(placeInfo.getBusiness_status());
+                if (placeInfo.getOpeningHours().getOpen_now()) {
                     mIsOpen.setText(R.string.open);
                     mIsOpen.setTextColor(getResources().getColor(R.color.positiveGreen));
                 } else {
@@ -496,18 +500,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         String placesData;
         GoogleMap gMap;
         String url;
-        private String mBusinessStatus;
-        private JSONObject mGeometryObject;
-        private JSONObject mLocationObject;
-        private String mLatitude;
-        private String mLongitude;
-        private String mNameOfPlace;
-        private String mPlaceId;
-        private JSONObject mOpeningHours;
-        private boolean mIsOpen;
         private LatLng mLatLng;
-        private JSONObject mMainJsonObject;
-        private String mAddress;
         private MarkerOptions mMarkerOptions;
 
         @Override
@@ -528,41 +521,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         @Override
         protected void onPostExecute(String s) {
             Log.d(TAG, "on Post Execute");
-            try {
-                JSONObject parent = new JSONObject(s);
-                JSONArray resultArray = parent.getJSONArray("results");
-                Log.d(TAG, "on Post Execute: " + resultArray.length());
-
-                for (int i = 0; i < resultArray.length(); i++) {
-                    mMainJsonObject = resultArray.getJSONObject(i);
-                    Log.i(TAG, "on Post Execute Place Status: " + mMainJsonObject.toString());
-                    mBusinessStatus = mMainJsonObject.getString("business_status");
-
-                    mGeometryObject = mMainJsonObject.getJSONObject("geometry");
-                    mLocationObject = mGeometryObject.getJSONObject("location");
-                    mLatitude = mLocationObject.getString("lat");
-                    mLongitude = mLocationObject.getString("lng");
-
-                    mNameOfPlace = mMainJsonObject.getString("name");
-                    mPlaceId = mMainJsonObject.getString("place_id");
-                    mAddress = mMainJsonObject.getString("vicinity");
-
-                    if (!mMainJsonObject.isNull("opening_hours")) {
-                        mOpeningHours = mMainJsonObject.getJSONObject("opening_hours");
-                        mIsOpen = mOpeningHours.getBoolean("open_now");
-                    }
-
-                    mLatLng = new LatLng(Double.parseDouble(mLatitude), Double.parseDouble(mLongitude));
-
-                    mMarkerOptions = new MarkerOptions()
-                            .title(mNameOfPlace)
-                            .position(mLatLng);
-                    gMap.addMarker(mMarkerOptions);
-                    mPlaceInfoList.add(new PlaceInfo(mNameOfPlace, mPlaceId, mAddress, mLatLng,
-                            mBusinessStatus, mIsOpen));
-                }
-            } catch (JSONException e) {
-                Log.d(TAG, "on Post Execute Error: " + e.getMessage());
+            Gson gson = new Gson();
+            PlaceInfoResponse response = gson.fromJson(s, PlaceInfoResponse.class);
+            Log.d(TAG, "on Post Execute " + response.getResults().size());
+            mPlaceInfoList = response.getResults();
+            for (int i = 0; i < mPlaceInfoList.size(); i++) {
+                mLatLng = new LatLng(mPlaceInfoList.get(i).getGeometry().getLocation().getLat(),
+                        mPlaceInfoList.get(i).getGeometry().getLocation().getLng());
+                mMarkerOptions = new MarkerOptions()
+                        .title(mPlaceInfoList.get(i).getName())
+                        .position(mLatLng);
+                gMap.addMarker(mMarkerOptions);
+                Log.d(TAG, "on Post Execute " + mLatLng.toString());
             }
         }
     }
@@ -572,7 +542,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         String url = NEAR_BY_SEARCH_URL + "location=" + latitude + "," + longitude +
                 "&radius=1000" +
                 "&type=hospital" +
-                "&key=AIzaSyBEf4eKXifD8oszcRw897rQFjRpPrS2FEw";
+                "&key=" + BuildConfig.MAPS_API_KEY;
         Log.d(TAG, "getNearByHospitals: " + url);
         Object[] data = new Object[2];
         data[0] = mGoogleMap;

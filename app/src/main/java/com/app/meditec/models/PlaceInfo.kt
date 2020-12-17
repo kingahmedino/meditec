@@ -1,6 +1,23 @@
 package com.app.meditec.models
 
-import com.google.android.gms.maps.model.LatLng
+data class PlaceInfo(
+        val name: String,
+        val place_id: String,
+        val vicinity: String,
+        val business_status: String,
+        val geometry: Geometry,
+        val openingHours: OpeningHours
+)
 
-class PlaceInfo(var name: String, var placeId: String, var address: String, var latLng: LatLng,
-                var businessStatus: String, var isOpenNow: Boolean)
+data class Geometry(
+        val location : Location
+)
+
+data class Location(
+        val lat : Double,
+        val lng : Double
+)
+
+data class OpeningHours(
+        val open_now: Boolean
+)
