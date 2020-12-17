@@ -1,12 +1,15 @@
 package com.app.meditec.models
 
+import com.google.gson.annotations.SerializedName
+
 data class PlaceInfo(
         val name: String,
         val place_id: String,
         val vicinity: String,
         val business_status: String,
         val geometry: Geometry,
-        val openingHours: OpeningHours
+        @SerializedName("opening_hours")
+        val opening_hours: OpeningHours
 )
 
 data class Geometry(

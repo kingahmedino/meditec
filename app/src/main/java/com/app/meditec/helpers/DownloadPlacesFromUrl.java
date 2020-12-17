@@ -1,17 +1,16 @@
 package com.app.meditec.helpers;
 
 import android.util.Log;
-
+import com.google.gson.Gson;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 
 public class DownloadPlacesFromUrl {
-    public String readUrl(String myUrl) throws IOException {
+    public PlaceInfoResponse readUrl(String myUrl) throws IOException {
         String data = "";
         InputStream inputStream = null;
         HttpURLConnection httpURLConnection = null;
@@ -39,6 +38,12 @@ public class DownloadPlacesFromUrl {
                 httpURLConnection.disconnect();
             }
         }
-        return data;
+        return parseData(data);
+    }
+
+    private PlaceInfoResponse parseData(String data) {
+        Gson gson = new Gson();
+        Log.d("DownloadPlacesFromUrl", "parseData: " + data);
+        return gson.fromJson(data, PlaceInfoResponse.class);
     }
 }
