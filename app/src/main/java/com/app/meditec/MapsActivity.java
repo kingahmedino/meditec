@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.databinding.DataBindingUtil;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import android.Manifest;
@@ -19,6 +20,9 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.app.meditec.databinding.ActivityMapBinding;
+import com.app.meditec.databinding.PlaceInfoBottomSheetBinding;
 import com.app.meditec.models.PlaceInfo;
 import com.app.meditec.ui.MapsViewModel;
 import com.google.android.gms.common.api.ResolvableApiException;
@@ -63,34 +67,27 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private AutocompleteSessionToken mToken;
     private PlacesClient mPlacesClient;
     private static List<PlaceInfo> mPlaceInfoList;
-    private ConstraintLayout mBottomSheetLayout;
     private BottomSheetBehavior mBottomSheetBehavior;
     private ImageView mHeaderArrow;
-    private TextView mPlaceName;
-    private TextView mPlaceAddress;
-    private TextView mBusinessStatus;
     private MapsViewModel mMapsViewModel;
-    private TextView mIsOpen;
+    private ActivityMapBinding mBinding;
+    private PlaceInfoBottomSheetBinding mBottomSheetBinding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_map);
+        mBinding = DataBindingUtil.setContentView(this, R.layout.activity_map);
+        mBottomSheetBinding = mBinding.bottomSheet;
         getLocationPermission();
 
         Places.initialize(getApplicationContext(), BuildConfig.MAPS_API_KEY);
         mPlacesClient = Places.createClient(this);
         mToken = AutocompleteSessionToken.newInstance();
         mPlaceInfoList = new ArrayList<>();
-        mBottomSheetLayout = findViewById(R.id.bottom_sheet);
-        mBottomSheetBehavior = BottomSheetBehavior.from(mBottomSheetLayout);
+        mBottomSheetBehavior = BottomSheetBehavior.from(mBottomSheetBinding.bottomSheet);
         mHeaderArrow = findViewById(R.id.header_arrow);
         headerImageClickListener();
         bottomSheetBehaviourCallback();
-        mPlaceName = findViewById(R.id.place_name_tv);
-        mPlaceAddress = findViewById(R.id.place_address_tv);
-        mBusinessStatus = findViewById(R.id.business_status_tv);
-        mIsOpen = findViewById(R.id.is_open_tv);
     }
 
     @Override
@@ -143,16 +140,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             LatLng place = new LatLng(placeInfo.getGeometry().getLocation().getLat(),
                     placeInfo.getGeometry().getLocation().getLng());
             if (place.equals(position)) {
-                mPlaceName.setText(placeInfo.getName());
-                mPlaceAddress.setText(placeInfo.getVicinity());
-                mBusinessStatus.setText(placeInfo.getBusiness_status());
-                if (placeInfo.getOpening_hours() != null && placeInfo.getOpening_hours().getOpen_now()) {
-                    mIsOpen.setText(R.string.open);
-                    mIsOpen.setTextColor(getResources().getColor(R.color.positiveGreen));
-                } else {
-                    mIsOpen.setText(R.string.closed);
-                    mIsOpen.setTextColor(getResources().getColor(R.color.negativeRed));
-                }
+                mBottomSheetBinding.setPlaceInfo(placeInfo);
                 return true;
             }
         }
