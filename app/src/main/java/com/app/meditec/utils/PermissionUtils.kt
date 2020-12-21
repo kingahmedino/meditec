@@ -7,7 +7,10 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.app.meditec.ui.StartUpActivity
 import com.app.meditec.ui.maps.MapsActivity
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
@@ -19,7 +22,7 @@ object PermissionUtils {
 
     private var mPermissionUtilsListener: PermissionUtilsListener? = null
 
-    fun setListener(permissionUtilsListener: PermissionUtilsListener){
+    fun setListener(permissionUtilsListener: PermissionUtilsListener) {
         mPermissionUtilsListener = permissionUtilsListener
     }
 
@@ -36,7 +39,7 @@ object PermissionUtils {
 
         task.addOnSuccessListener(activity) { response ->
             val states = response.locationSettingsStates
-            if (states.isLocationPresent){
+            if (states.isLocationPresent) {
                 mPermissionUtilsListener?.GPSIsEnabled()
             }
         }
@@ -67,6 +70,18 @@ object PermissionUtils {
         } else {
             ActivityCompat.requestPermissions(activity, permissions,
                     MapsActivity.LOCATION_PERMISSION_REQUEST_CODE)
+        }
+        return false
+    }
+
+    fun isGoogleServicesAvailable(activity: AppCompatActivity): Boolean {
+        val available = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(activity)
+        if (available == ConnectionResult.SUCCESS)
+            return true
+        else if (GoogleApiAvailability.getInstance().isUserResolvableError(available)) {
+            val dialog = GoogleApiAvailability.getInstance().getErrorDialog(activity,
+                    available, StartUpActivity.ERROR_DIALOG_REQUEST)
+            dialog.show()
         }
         return false
     }
