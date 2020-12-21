@@ -38,7 +38,7 @@ object PermissionUtils {
         task.addOnSuccessListener(activity) { response ->
             val states = response.locationSettingsStates
             if (states.isLocationPresent){
-                mPermissionUtilsListener?.locationGranted()
+                mPermissionUtilsListener?.GPSIsEnabled()
             }
         }
 
