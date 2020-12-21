@@ -1,4 +1,4 @@
-package com.app.meditec
+package com.app.meditec.utils
 
 interface PermissionUtilsListener {
     fun GPSIsEnabled()

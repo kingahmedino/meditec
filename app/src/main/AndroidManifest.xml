@@ -14,13 +14,13 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <uses-library android:name="org.apache.http.legacy" android:required="false"/>
-        <activity android:name=".MapsActivity" />
+        <activity android:name=".ui.maps.MapsActivity" />
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${mapsApiKey}" />
 
-        <activity android:name=".StartUpActivity">
+        <activity android:name=".ui.StartUpActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

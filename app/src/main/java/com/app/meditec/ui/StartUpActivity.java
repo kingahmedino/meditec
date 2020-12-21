@@ -1,4 +1,4 @@
-package com.app.meditec;
+package com.app.meditec.ui;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -10,6 +10,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.app.meditec.R;
+import com.app.meditec.ui.maps.MapsActivity;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
