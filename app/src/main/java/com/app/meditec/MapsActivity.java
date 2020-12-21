@@ -31,7 +31,6 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import java.util.ArrayList;
@@ -47,7 +46,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private GoogleMap mGoogleMap;
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private Location mCurrentLocation;
-    private static List<PlaceInfo> mPlaceInfoList;
+    private List<PlaceInfo> mPlaceInfoList;
     private BottomSheetBehavior mBottomSheetBehavior;
     private ImageView mHeaderArrow;
     private MapsViewModel mMapsViewModel;
@@ -121,9 +120,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
-        mMapsViewModel.getPlacesResponseStatus().observe(this, placeResponseStatus -> {
-            Toast.makeText(this, placeResponseStatus, Toast.LENGTH_SHORT).show();
-        });
+        mMapsViewModel.getPlacesResponseStatus().observe(this, placeResponseStatus ->
+                Toast.makeText(this, placeResponseStatus, Toast.LENGTH_SHORT).show());
     }
 
     @Override
@@ -142,13 +140,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mGoogleMap.getUiSettings().setMyLocationButtonEnabled(true);
 
         mGoogleMap.setOnMarkerClickListener(marker -> {
-            Log.d(TAG, "Marker is clicked: " + marker.getTitle());
-            Log.d(TAG, "on Marker Click: " + mPlaceInfoList.size());
-            boolean isPlaceInList = getPlaceDetails(marker.getPosition());
-            if (isPlaceInList) {
-                if (mBottomSheetBehavior.getState() == BottomSheetBehavior.STATE_COLLAPSED)
-                    mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-            }
+            showPlaceDetails(marker.getPosition());
             return false;
         });
 
@@ -161,21 +153,23 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             mFusedLocationProviderClient.removeLocationUpdates(mLocationCallback);
     }
 
-    private boolean getPlaceDetails(LatLng position) {
+    private void showPlaceDetails(LatLng position) {
         for (PlaceInfo placeInfo : mPlaceInfoList) {
             LatLng place = new LatLng(placeInfo.getGeometry().getLocation().getLat(),
                     placeInfo.getGeometry().getLocation().getLng());
             if (place.equals(position)) {
                 mBottomSheetBinding.setPlaceInfo(placeInfo);
-                return true;
+                if (mBottomSheetBehavior.getState() == BottomSheetBehavior.STATE_COLLAPSED)
+                    mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                break;
             }
         }
-        return false;
     }
 
     private void initializeMap() {
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-        mapFragment.getMapAsync(MapsActivity.this);
+        if (mapFragment != null)
+            mapFragment.getMapAsync(MapsActivity.this);
     }
 
     private void moveCamera(LatLng latLng) {
@@ -199,21 +193,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        Log.d(TAG, "onRequestPermissionsResult called !");
         mLocationPermissionGranted = false;
-
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0) {
                 for (int grantResult : grantResults) {
                     if (grantResult != PackageManager.PERMISSION_GRANTED) {
-                        Log.d(TAG, "onRequestPermissionsResult failed");
                         Toast.makeText(this, "Location permissions needed to show maps", Toast.LENGTH_LONG).show();
                         mLocationPermissionGranted = false;
                         finish();
                         return;
                     }
                 }
-                Log.d(TAG, "onRequestPermissionsResult granted");
                 mLocationPermissionGranted = true;
                 initializeMap();
                 PermissionUtils.INSTANCE.checkIfGPSIsEnabled(this);
@@ -221,7 +211,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    /*-----------------------  bottom sheet -----------------------*/
     private void bottomSheetBehaviourCallback() {
         mBottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             @Override
