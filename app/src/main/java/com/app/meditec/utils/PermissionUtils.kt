@@ -1,16 +1,23 @@
 package com.app.meditec.utils
 
+import android.Manifest
 import android.content.IntentSender.SendIntentException
+import android.content.pm.PackageManager
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import com.app.meditec.PermissionUtilsListener
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.app.meditec.MapsActivity
+import com.app.meditec.PermissionUtilsListener
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.LocationSettingsRequest
 
 object PermissionUtils {
+    private const val FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION
+    private const val COARSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION
+
     private var mPermissionUtilsListener: PermissionUtilsListener? = null
 
     fun setListener(permissionUtilsListener: PermissionUtilsListener){
@@ -44,5 +51,24 @@ object PermissionUtils {
                 }
             }
         }
+    }
+
+    fun getLocationPermission(activity: AppCompatActivity): Boolean {
+        val permissions = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION)
+        if (ContextCompat.checkSelfPermission(activity.applicationContext,
+                        FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(activity.applicationContext,
+                            COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                return true
+            } else {
+                ActivityCompat.requestPermissions(activity, permissions,
+                        MapsActivity.LOCATION_PERMISSION_REQUEST_CODE)
+            }
+        } else {
+            ActivityCompat.requestPermissions(activity, permissions,
+                    MapsActivity.LOCATION_PERMISSION_REQUEST_CODE)
+        }
+        return false
     }
 }

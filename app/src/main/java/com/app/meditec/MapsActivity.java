@@ -3,12 +3,9 @@ package com.app.meditec;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -38,15 +35,12 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
-import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, PermissionUtilsListener {
     private static final String TAG = "MapsActivity";
-    private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
-    private static final String COARSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION;
     public static final int LOCATION_PERMISSION_REQUEST_CODE = 102;
     public static final float DEFAULT_ZOOM = 15f;
     public static final int GPS_REQUEST_CODE = 189;
@@ -55,7 +49,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private GoogleMap mGoogleMap;
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private Location mCurrentLocation;
-    private PlacesClient mPlacesClient;
     private static List<PlaceInfo> mPlaceInfoList;
     private BottomSheetBehavior mBottomSheetBehavior;
     private ImageView mHeaderArrow;
@@ -70,12 +63,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         PermissionUtils.INSTANCE.setListener(this);
         mMapsViewModel = new ViewModelProvider(this).get(MapsViewModel.class);
         mBottomSheetBinding = mBinding.bottomSheet;
-        getLocationPermission();
+        mLocationPermissionGranted = PermissionUtils.INSTANCE.getLocationPermission(this);
         if (mLocationPermissionGranted)
             initializeMap();
 
         Places.initialize(getApplicationContext(), BuildConfig.MAPS_API_KEY);
-        mPlacesClient = Places.createClient(this);
         mPlaceInfoList = new ArrayList<>();
         mBottomSheetBehavior = BottomSheetBehavior.from(mBottomSheetBinding.bottomSheet);
         mHeaderArrow = findViewById(R.id.header_arrow);
@@ -117,7 +109,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        Toast.makeText(MapsActivity.this, "Map is ready", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Map is ready", Toast.LENGTH_SHORT).show();
         mGoogleMap = googleMap;
 
         mGoogleMap.setMyLocationEnabled(true);
@@ -142,7 +134,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        mFusedLocationProviderClient.removeLocationUpdates(mLocationCallback);
+        if (mFusedLocationProviderClient != null)
+            mFusedLocationProviderClient.removeLocationUpdates(mLocationCallback);
     }
 
     private boolean getPlaceDetails(LatLng position) {
@@ -224,30 +217,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 getDeviceLocation();
             } else {
                 Log.d(TAG, "user ignored GPS alert");
-                Toast.makeText(MapsActivity.this, "Keep your GPS enabled", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Keep your GPS enabled", Toast.LENGTH_LONG).show();
                 finish();
             }
-        }
-    }
-
-    private void getLocationPermission() {
-        Log.d(TAG, "getting permissions");
-        String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION};
-        if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
-                FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
-                    COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                mLocationPermissionGranted = true;
-            } else {
-                Log.d(TAG, "getting first permissions failed");
-                ActivityCompat.requestPermissions(this, permissions,
-                        LOCATION_PERMISSION_REQUEST_CODE);
-            }
-        } else {
-            Log.d(TAG, "getting second permissions failed");
-            ActivityCompat.requestPermissions(this, permissions,
-                    LOCATION_PERMISSION_REQUEST_CODE);
         }
     }
 
@@ -261,13 +233,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 for (int i = 0; i < grantResults.length; i++) {
                     if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
                         Log.d(TAG, "onRequestPermissionsResult failed");
+                        Toast.makeText(this, "Location permissions needed to show maps", Toast.LENGTH_LONG).show();
                         mLocationPermissionGranted = false;
+                        finish();
                         return;
                     }
                 }
                 Log.d(TAG, "onRequestPermissionsResult granted");
                 mLocationPermissionGranted = true;
                 initializeMap();
+                getDeviceLocation();
             }
         }
     }
