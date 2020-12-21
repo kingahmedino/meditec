@@ -2,7 +2,6 @@ package com.app.meditec.ui
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.app.meditec.BuildConfig
 import com.app.meditec.models.PlaceInfo
 import com.app.meditec.repository.PlacesRepository
 import kotlinx.coroutines.CoroutineScope
@@ -21,17 +20,9 @@ class MapsViewModel : ViewModel() {
     }
 
     fun getPlaces(lat: Double, lng:Double) {
-        val url = "${NEAR_BY_SEARCH_URL}location=${lat},${lng}" +
-                "&radius=1000" +
-                "&type=hospital" +
-                "&key=${BuildConfig.MAPS_API_KEY}"
         uiScope.launch(Dispatchers.IO) {
-            placesLiveData.postValue(PlacesRepository.getPlaces(url))
+            placesLiveData.postValue(PlacesRepository.getPlaces(lat, lng))
         }
-    }
-
-    companion object {
-        const val NEAR_BY_SEARCH_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?"
     }
 
 }

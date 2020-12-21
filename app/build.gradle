@@ -7,6 +7,11 @@ android {
     compileSdkVersion 29
     buildToolsVersion "29.0.3"
 
+    compileOptions{
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
     defaultConfig {
         applicationId "com.app.meditec"
         minSdkVersion 21
@@ -47,6 +52,10 @@ dependencies {
     implementation 'com.google.android.libraries.places:places:2.3.0'
     implementation 'com.google.android.material:material:1.2.1'
     implementation 'com.github.mancj:MaterialSearchBar:0.8.5'
+
+    //web service requests
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
 
     //lifecycle dependencies
     implementation "androidx.lifecycle:lifecycle-viewmodel:2.2.0"

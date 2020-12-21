@@ -1,4 +1,4 @@
-package com.app.meditec.helpers
+package com.app.meditec.api
 
 import com.app.meditec.models.PlaceInfo
 
