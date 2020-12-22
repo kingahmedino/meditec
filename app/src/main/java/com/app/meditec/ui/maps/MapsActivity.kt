@@ -199,9 +199,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
                 mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED)
         }
 
-        mBinding.backArrow.setOnClickListener {
-            onBackPressed()
-        }
     }
 
     companion object {

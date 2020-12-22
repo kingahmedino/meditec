@@ -9,6 +9,7 @@
         tools:context=".ui.maps.MapsActivity">
 
         <androidx.coordinatorlayout.widget.CoordinatorLayout
+            android:id="@+id/coordinatorLayout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -28,31 +29,32 @@
 
         </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
-        <ImageView
-            android:id="@+id/back_arrow"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/search_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_margin="20dp"
-            android:background="@drawable/circular_background"
+            app:queryHint="Search for places"
+            android:background="@drawable/search_bar_bgnd"
             android:elevation="4dp"
-            android:padding="3dp"
-            android:src="@drawable/ic_arrow_left"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:tint="@color/colorBlack" />
+            app:searchIcon="@drawable/ic_search"
+            android:layoutDirection="rtl" />
 
-        <ImageView
-            android:id="@+id/search_icon"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:layout_margin="20dp"
-            android:background="@drawable/circular_background"
-            android:elevation="4dp"
-            android:padding="5dp"
-            android:src="@drawable/ic_search"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:tint="@color/colorBlack" />
+<!--        <ImageView-->
+<!--            android:id="@+id/back_arrow"-->
+<!--            android:layout_width="36dp"-->
+<!--            android:layout_height="36dp"-->
+<!--            android:layout_marginStart="5dp"-->
+<!--            android:elevation="4dp"-->
+<!--            android:padding="3dp"-->
+<!--            android:src="@drawable/ic_arrow_left"-->
+<!--            app:layout_constraintBottom_toBottomOf="@+id/search_bar"-->
+<!--            app:layout_constraintStart_toStartOf="@+id/search_bar"-->
+<!--            app:layout_constraintTop_toTopOf="@+id/search_bar"-->
+<!--            app:tint="@color/colorBlack" />-->
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
