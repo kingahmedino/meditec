@@ -58,7 +58,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
         Places.initialize(applicationContext, BuildConfig.MAPS_API_KEY)
         mPlaceInfoList = ArrayList()
         mBottomSheetBehavior = BottomSheetBehavior.from(mBottomSheetBinding.bottomSheet)
-        bottomSheetArrowClickListener()
+        setClickListeners()
         bottomSheetBehaviourCallback()
     }
 
@@ -191,12 +191,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
         })
     }
 
-    private fun bottomSheetArrowClickListener() {
+    private fun setClickListeners() {
         mBottomSheetBinding.headerArrow.setOnClickListener {
             if (mBottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED)
                 mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED)
             else
                 mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED)
+        }
+
+        mBinding.backArrow.setOnClickListener {
+            onBackPressed()
         }
     }
 

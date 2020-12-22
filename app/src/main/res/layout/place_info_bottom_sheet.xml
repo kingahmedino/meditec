@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <data>
+
         <variable
             name="placeInfo"
             type="com.app.meditec.models.PlaceInfo" />
@@ -23,11 +23,12 @@
             android:layout_height="36dp"
             android:layout_marginStart="20dp"
             android:background="@drawable/circular_background"
+            android:elevation="4dp"
             android:padding="4dp"
-            android:tint="@color/colorWhite"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_arrow_up_black_24dp" />
+            app:srcCompat="@drawable/ic_arrow_up"
+            app:tint="@color/colorBlack" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -43,10 +44,10 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_marginTop="8dp"
-                android:tint="@color/colorPrimary"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/ic_home_black_24dp" />
+                app:srcCompat="@drawable/ic_home"
+                app:tint="@color/colorPrimary" />
 
             <TextView
                 android:id="@+id/place_name_tv"
@@ -77,20 +78,20 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:tint="@color/colorPrimary"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/place_name_tv"
-                app:srcCompat="@drawable/ic_location_on_black_24dp" />
+                app:srcCompat="@drawable/ic_location"
+                app:tint="@color/colorPrimary" />
 
             <ImageView
                 android:id="@+id/imageView4"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:tint="@color/colorPrimary"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/place_address_tv"
-                app:srcCompat="@drawable/ic_business_status" />
+                app:srcCompat="@drawable/ic_business"
+                app:tint="@color/colorPrimary" />
 
             <TextView
                 android:id="@+id/business_status_tv"
@@ -109,10 +110,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:tint="@color/colorPrimary"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/business_status_tv"
-                app:srcCompat="@drawable/ic_open_now" />
+                app:srcCompat="@drawable/ic_open_now"
+                app:tint="@color/colorPrimary" />
 
             <TextView
                 android:id="@+id/is_open_tv"
@@ -130,7 +131,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:drawableEnd="@drawable/ic_arrow_forward_white"
+                android:drawableEnd="@drawable/ic_arrow_forward"
                 android:text="@string/go"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/is_open_tv" />
