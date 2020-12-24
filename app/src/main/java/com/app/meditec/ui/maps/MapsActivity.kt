@@ -43,6 +43,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior.BottomSheetCa
 import java.util.*
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsListener {
+    private var isCameraMovedOnAppStart = false
     private var mLocationPermissionGranted = false
     private var mLocationCallback: LocationCallback? = null
     private var mGoogleMap: GoogleMap? = null
@@ -98,8 +99,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
                 super.onLocationResult(locationResult)
                 if (locationResult != null) {
                     mCurrentLocation = locationResult.lastLocation
-                    moveCamera(LatLng(mCurrentLocation!!.latitude, mCurrentLocation!!.longitude))
                     mMapsViewModel.getPlaces(mCurrentLocation!!.latitude, mCurrentLocation!!.longitude)
+                    if (!isCameraMovedOnAppStart) {
+                        isCameraMovedOnAppStart = true
+                        moveCamera(LatLng(mCurrentLocation!!.latitude, mCurrentLocation!!.longitude))
+                    }
                 }
             }
         }
