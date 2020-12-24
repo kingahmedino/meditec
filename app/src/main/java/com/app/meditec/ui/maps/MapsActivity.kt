@@ -9,8 +9,8 @@ import android.os.Bundle
 import android.os.Looper
 import android.util.Log
 import android.view.View
-import android.view.WindowManager
 import android.widget.AdapterView
+import android.widget.RelativeLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
@@ -52,6 +52,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
     private var mPlaceInfoList: List<PlaceInfo>? = null
     private var mPlacesClient: PlacesClient? = null
     private var mToken: AutocompleteSessionToken? = null
+    private var mMapView: View? = null
     private lateinit var mBottomSheetBehavior: BottomSheetBehavior<*>
     private lateinit var mMapsViewModel: MapsViewModel
     private lateinit var mBinding: ActivityMapBinding
@@ -136,6 +137,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
         mGoogleMap = googleMap
         mGoogleMap!!.isMyLocationEnabled = true
         mGoogleMap!!.uiSettings.isMyLocationButtonEnabled = true
+        moveLocationButtonLower()
         mGoogleMap!!.setOnMarkerClickListener { marker: Marker ->
             showPlaceDetails(marker.position)
             false
@@ -162,7 +164,18 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
 
     private fun initializeMap() {
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment?
-        mapFragment?.getMapAsync(this)
+        mMapView = mapFragment!!.requireView()
+        mapFragment.getMapAsync(this)
+    }
+
+    private fun moveLocationButtonLower() {
+        if (mMapView != null && mMapView!!.findViewById<View>("1".toInt()) != null) {
+            val locationButton = (mMapView!!.findViewById<View>("1".toInt()).parent as View)
+                    .findViewById<View>("2".toInt())
+            val layoutParams = locationButton.layoutParams as RelativeLayout.LayoutParams
+            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP, 0)
+            layoutParams.setMargins(0, 140, 40, 0)
+        }
     }
 
     private fun moveCamera(latLng: LatLng) {
