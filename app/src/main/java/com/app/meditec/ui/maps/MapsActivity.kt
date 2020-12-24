@@ -9,6 +9,8 @@ import android.os.Bundle
 import android.os.Looper
 import android.util.Log
 import android.view.View
+import android.view.WindowManager
+import android.widget.AdapterView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
@@ -22,6 +24,7 @@ import com.app.meditec.databinding.PlaceInfoBottomSheetBinding
 import com.app.meditec.models.PlaceInfo
 import com.app.meditec.utils.PermissionUtils
 import com.app.meditec.utils.PermissionUtilsListener
+import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -32,6 +35,8 @@ import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.AutocompleteSessionToken
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetBehavior.BottomSheetCallback
@@ -50,6 +55,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
     private lateinit var mMapsViewModel: MapsViewModel
     private lateinit var mBinding: ActivityMapBinding
     private lateinit var mBottomSheetBinding: PlaceInfoBottomSheetBinding
+    private lateinit var mAutoCompleteListener: AdapterView.OnItemClickListener
+    private lateinit var mSearchPlacesAutoCompleteAdapter: SearchPlacesAutoCompleteAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,6 +70,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
         Places.initialize(applicationContext, BuildConfig.MAPS_API_KEY)
         mPlacesClient = Places.createClient(this)
         mToken = AutocompleteSessionToken.newInstance()
+        mSearchPlacesAutoCompleteAdapter = SearchPlacesAutoCompleteAdapter(this, mPlacesClient!!, mToken!!)
         mPlaceInfoList = ArrayList()
         mBottomSheetBehavior = BottomSheetBehavior.from(mBottomSheetBinding.bottomSheet)
         initViews()
@@ -110,7 +118,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
             }
         })
         mMapsViewModel.placesResponseStatus.observe(this, Observer { placeResponseStatus ->
-            Toast.makeText(this, placeResponseStatus, Toast.LENGTH_SHORT).show()
+            showToast(placeResponseStatus)
         })
     }
 
@@ -120,7 +128,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
 
     @SuppressLint("MissingPermission")
     override fun onMapReady(googleMap: GoogleMap) {
-        Toast.makeText(this, "Map is ready", Toast.LENGTH_SHORT).show()
+        showToast("Map is ready")
         mGoogleMap = googleMap
         mGoogleMap!!.isMyLocationEnabled = true
         mGoogleMap!!.uiSettings.isMyLocationButtonEnabled = true
@@ -157,6 +165,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
         mGoogleMap!!.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, DEFAULT_ZOOM))
     }
 
+    private fun moveCameraAndAddMarker(latLng: LatLng, title: String) {
+        mGoogleMap!!.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, DEFAULT_ZOOM))
+        val options = MarkerOptions()
+                .position(latLng)
+                .title(title)
+        mGoogleMap!!.addMarker(options)
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == GPS_REQUEST_CODE) {
@@ -164,7 +180,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
                 if (mLocationPermissionGranted) setupLocationUpdatesListener()
             } else {
                 Log.d(TAG, "user ignored GPS alert")
-                Toast.makeText(this, "Keep your GPS enabled", Toast.LENGTH_LONG).show()
+                showToast("Keep your GPS enabled")
                 finish()
             }
         }
@@ -176,7 +192,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
             if (grantResults.isNotEmpty()) {
                 for (grantResult in grantResults) {
                     if (grantResult != PackageManager.PERMISSION_GRANTED) {
-                        Toast.makeText(this, "Location permissions needed to show maps", Toast.LENGTH_LONG).show()
+                        showToast("Location permissions needed to show maps")
                         mLocationPermissionGranted = false
                         finish()
                         return
@@ -205,11 +221,33 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
             else
                 mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED)
         }
+        mBinding.autoCompleteTextView.setAdapter(mSearchPlacesAutoCompleteAdapter)
 
-        mBinding.autoCompleteTextView.setAdapter(SearchPlacesAutoCompleteAdapter(
-                this, mPlacesClient!!, mToken!!
-        ))
+        mAutoCompleteListener = AdapterView.OnItemClickListener { _, _, position, _ ->
+            val item = mSearchPlacesAutoCompleteAdapter.getItem(position)
+            val placeId = item?.placeId
+            getPlaceWith(placeId)
+        }
 
+        mBinding.autoCompleteTextView.onItemClickListener = mAutoCompleteListener
+    }
+
+    private fun getPlaceWith(placeId: String?) {
+        val placeFields = listOf(Place.Field.ID, Place.Field.NAME, Place.Field.LAT_LNG)
+        val request = FetchPlaceRequest.builder(placeId!!, placeFields).build()
+
+        mPlacesClient!!.fetchPlace(request).addOnSuccessListener { response ->
+            val place = response.place
+            moveCameraAndAddMarker(place.latLng!!, place.name!!)
+        }.addOnFailureListener { exception ->
+            if (exception is ApiException) {
+                showToast("An error occurred, place not found")
+            }
+        }
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
     companion object {
