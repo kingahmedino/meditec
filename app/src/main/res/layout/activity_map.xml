@@ -29,21 +29,22 @@
 
         </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
-        <androidx.appcompat.widget.SearchView
-            android:id="@+id/search_bar"
+        <com.google.android.material.textfield.MaterialAutoCompleteTextView
+            android:id="@+id/autoCompleteTextView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="46dp"
             android:layout_margin="20dp"
-            app:queryHint="Search for places"
             android:background="@drawable/search_bar_bgnd"
-            android:elevation="4dp"
-            app:iconifiedByDefault="false"
+            android:completionThreshold="1"
+            android:drawableStart="@drawable/ic_search"
+            android:drawablePadding="5dp"
+            android:hint="@string/search_places"
+            android:overScrollMode="never"
+            android:padding="10dp"
+            android:scrollbars="none"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:searchIcon="@drawable/ic_search"
-            app:closeIcon="@drawable/ic_close"
-            android:layoutDirection="rtl" />
+            app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

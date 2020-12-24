@@ -16,6 +16,7 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.app.meditec.BuildConfig
 import com.app.meditec.R
+import com.app.meditec.adapters.SearchPlacesAutoCompleteAdapter
 import com.app.meditec.databinding.ActivityMapBinding
 import com.app.meditec.databinding.PlaceInfoBottomSheetBinding
 import com.app.meditec.models.PlaceInfo
@@ -30,6 +31,8 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.model.AutocompleteSessionToken
+import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetBehavior.BottomSheetCallback
 import java.util.*
@@ -41,6 +44,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
     private var mFusedLocationProviderClient: FusedLocationProviderClient? = null
     private var mCurrentLocation: Location? = null
     private var mPlaceInfoList: List<PlaceInfo>? = null
+    private var mPlacesClient: PlacesClient? = null
+    private var mToken: AutocompleteSessionToken? = null
     private lateinit var mBottomSheetBehavior: BottomSheetBehavior<*>
     private lateinit var mMapsViewModel: MapsViewModel
     private lateinit var mBinding: ActivityMapBinding
@@ -56,9 +61,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
         if (mLocationPermissionGranted) initializeMap()
         createLocationCallback()
         Places.initialize(applicationContext, BuildConfig.MAPS_API_KEY)
+        mPlacesClient = Places.createClient(this)
+        mToken = AutocompleteSessionToken.newInstance()
         mPlaceInfoList = ArrayList()
         mBottomSheetBehavior = BottomSheetBehavior.from(mBottomSheetBinding.bottomSheet)
-        setClickListeners()
+        initViews()
         bottomSheetBehaviourCallback()
     }
 
@@ -191,13 +198,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
         })
     }
 
-    private fun setClickListeners() {
+    private fun initViews() {
         mBottomSheetBinding.headerArrow.setOnClickListener {
             if (mBottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED)
                 mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED)
             else
                 mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED)
         }
+
+        mBinding.autoCompleteTextView.setAdapter(SearchPlacesAutoCompleteAdapter(
+                this, mPlacesClient!!, mToken!!
+        ))
 
     }
 
