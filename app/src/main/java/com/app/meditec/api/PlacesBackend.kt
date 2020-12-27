@@ -7,16 +7,16 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Url
 
-interface Backend {
+interface PlacesBackend {
     companion object {
         const val BASE_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/"
 
-        operator fun invoke(): Backend {
+        operator fun invoke(): PlacesBackend {
             return Retrofit.Builder()
                     .baseUrl(BASE_URL)
                     .addConverterFactory(GsonConverterFactory.create())
                     .build()
-                    .create(Backend::class.java)
+                    .create(PlacesBackend::class.java)
         }
     }
 

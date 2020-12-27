@@ -33,6 +33,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.PolylineOptions
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.AutocompleteSessionToken
 import com.google.android.libraries.places.api.model.Place
@@ -122,7 +123,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
                 mGoogleMap!!.addMarker(markerOptions)
             }
         })
-        mMapsViewModel.placesResponseStatus.observe(this, Observer { placeResponseStatus ->
+        mMapsViewModel.routeLiveData.observe(this, Observer { routes ->
+            for (route in routes){
+                val polylineOptions = PolylineOptions()
+                polylineOptions.color(resources.getColor(R.color.colorPrimary))
+                polylineOptions.width(7f)
+                polylineOptions.addAll(route.polyLines)
+                mGoogleMap!!.addPolyline(polylineOptions)
+            }
+        })
+        mMapsViewModel.responseStatus.observe(this, Observer { placeResponseStatus ->
             showToast(placeResponseStatus)
         })
     }
@@ -155,6 +165,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
                     placeInfo.geometry.location.lng)
             if (place == position) {
                 mBottomSheetBinding.placeInfo = placeInfo
+
+                val latlng = LatLng(mCurrentLocation!!.latitude, mCurrentLocation!!.longitude)
+                mMapsViewModel.getDirections(latlng, placeInfo.place_id)
+
                 if (mBottomSheetBehavior.state == BottomSheetBehavior.STATE_COLLAPSED)
                     mBottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
                 break
