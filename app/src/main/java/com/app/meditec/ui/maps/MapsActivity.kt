@@ -30,10 +30,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.Marker
-import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.gms.maps.model.PolylineOptions
+import com.google.android.gms.maps.model.*
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.AutocompleteSessionToken
 import com.google.android.libraries.places.api.model.Place
@@ -54,6 +51,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
     private var mPlacesClient: PlacesClient? = null
     private var mToken: AutocompleteSessionToken? = null
     private var mMapView: View? = null
+    private var mCurrentlySelectedPlace: PlaceInfo? = null
+    private var mCurrentPolyLine: Polyline? = null
     private lateinit var mBottomSheetBehavior: BottomSheetBehavior<*>
     private lateinit var mMapsViewModel: MapsViewModel
     private lateinit var mBinding: ActivityMapBinding
@@ -129,7 +128,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
                 polylineOptions.color(resources.getColor(R.color.colorPrimary))
                 polylineOptions.width(7f)
                 polylineOptions.addAll(route.polyLines)
-                mGoogleMap!!.addPolyline(polylineOptions)
+                mCurrentPolyLine = mGoogleMap!!.addPolyline(polylineOptions)
             }
         })
         mMapsViewModel.responseStatus.observe(this, Observer { placeResponseStatus ->
@@ -165,10 +164,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
                     placeInfo.geometry.location.lng)
             if (place == position) {
                 mBottomSheetBinding.placeInfo = placeInfo
-
-                val latlng = LatLng(mCurrentLocation!!.latitude, mCurrentLocation!!.longitude)
-                mMapsViewModel.getDirections(latlng, placeInfo.place_id)
-
+                mCurrentlySelectedPlace = placeInfo
                 if (mBottomSheetBehavior.state == BottomSheetBehavior.STATE_COLLAPSED)
                     mBottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
                 break
@@ -261,6 +257,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
         }
 
         mBinding.autoCompleteTextView.onItemClickListener = mAutoCompleteListener
+
+        mBottomSheetBinding.button.setOnClickListener {
+            val latLng = LatLng(mCurrentLocation!!.latitude, mCurrentLocation!!.longitude)
+            mMapsViewModel.getDirections(latLng, mCurrentlySelectedPlace!!.place_id)
+            mCurrentPolyLine?.remove()
+            mBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+        }
     }
 
     private fun getPlaceWith(placeId: String?) {
