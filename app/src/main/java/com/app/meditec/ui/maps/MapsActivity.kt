@@ -22,6 +22,7 @@ import com.app.meditec.adapters.SearchPlacesAutoCompleteAdapter
 import com.app.meditec.databinding.ActivityMapBinding
 import com.app.meditec.databinding.PlaceInfoBottomSheetBinding
 import com.app.meditec.models.PlaceInfo
+import com.app.meditec.utils.MapUtils
 import com.app.meditec.utils.PermissionUtils
 import com.app.meditec.utils.PermissionUtilsListener
 import com.google.android.gms.common.api.ApiException
@@ -116,10 +117,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
             mPlaceInfoList = placeInfos
             for ((name, _, _, _, geometry) in mPlaceInfoList!!) {
                 val latLng = LatLng(geometry.location.lat, geometry.location.lng)
-                val markerOptions = MarkerOptions()
-                        .title(name)
-                        .position(latLng)
-                mGoogleMap!!.addMarker(markerOptions)
+                mGoogleMap!!.addMarker(MapUtils.createMarkerOptions(name, latLng))
             }
         })
         mMapsViewModel.routeLiveData.observe(this, Observer { routes ->
@@ -193,11 +191,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
     }
 
     private fun moveCameraAndAddMarker(latLng: LatLng, title: String) {
-        mGoogleMap!!.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, DEFAULT_ZOOM))
-        val options = MarkerOptions()
-                .position(latLng)
-                .title(title)
-        mGoogleMap!!.addMarker(options)
+        moveCamera(latLng)
+        mGoogleMap!!.addMarker(MapUtils.createMarkerOptions(title, latLng))
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
