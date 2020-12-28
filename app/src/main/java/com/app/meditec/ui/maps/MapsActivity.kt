@@ -53,7 +53,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
     private var mToken: AutocompleteSessionToken? = null
     private var mMapView: View? = null
     private var mCurrentlySelectedPlace: PlaceInfo? = null
-    private var mCurrentPolyLine: Polyline? = null
+    private val mPolyLines = mutableListOf<Polyline>()
     private lateinit var mBottomSheetBehavior: BottomSheetBehavior<*>
     private lateinit var mMapsViewModel: MapsViewModel
     private lateinit var mBinding: ActivityMapBinding
@@ -126,7 +126,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
                 polylineOptions.color(resources.getColor(R.color.colorAccent))
                 polylineOptions.width(7f)
                 polylineOptions.addAll(route.polyLines)
-                mCurrentPolyLine = mGoogleMap!!.addPolyline(polylineOptions)
+                mPolyLines.add(mGoogleMap!!.addPolyline(polylineOptions))
             }
         })
         mMapsViewModel.responseStatus.observe(this, Observer { placeResponseStatus ->
@@ -254,7 +254,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
         mBinding.autoCompleteTextView.onItemClickListener = mAutoCompleteListener
 
         mBottomSheetBinding.button.setOnClickListener {
-            mCurrentPolyLine?.remove()
+            for (polyline in mPolyLines){
+                polyline.remove()
+            }
+            mPolyLines.clear()
             val latLng = LatLng(mCurrentLocation!!.latitude, mCurrentLocation!!.longitude)
             mMapsViewModel.getDirections(latLng, mCurrentlySelectedPlace!!.place_id)
             mBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
