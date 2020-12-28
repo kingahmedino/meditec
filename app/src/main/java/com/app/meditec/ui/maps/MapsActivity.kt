@@ -125,7 +125,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
         mMapsViewModel.routeLiveData.observe(this, Observer { routes ->
             for (route in routes){
                 val polylineOptions = PolylineOptions()
-                polylineOptions.color(resources.getColor(R.color.colorPrimary))
+                polylineOptions.color(resources.getColor(R.color.colorAccent))
                 polylineOptions.width(7f)
                 polylineOptions.addAll(route.polyLines)
                 mCurrentPolyLine = mGoogleMap!!.addPolyline(polylineOptions)
@@ -259,9 +259,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
         mBinding.autoCompleteTextView.onItemClickListener = mAutoCompleteListener
 
         mBottomSheetBinding.button.setOnClickListener {
+            mCurrentPolyLine?.remove()
             val latLng = LatLng(mCurrentLocation!!.latitude, mCurrentLocation!!.longitude)
             mMapsViewModel.getDirections(latLng, mCurrentlySelectedPlace!!.place_id)
-            mCurrentPolyLine?.remove()
             mBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
         }
     }
