@@ -49,7 +49,7 @@ class MapsViewModel : ViewModel() {
             try {
                 _routesLiveData.postValue(MapsRepository.getDirections(currentLocation, endPlaceId, mode))
             } catch (t: Throwable){
-                _responseStatus.postValue(t.message)
+                _responseStatus.postValue("An error occurred.\nCheck your internet connection.")
             }
         }
     }
