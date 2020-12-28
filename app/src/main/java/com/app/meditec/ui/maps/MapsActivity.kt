@@ -77,7 +77,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
         mPlaceInfoList = ArrayList()
         mBottomSheetBehavior = BottomSheetBehavior.from(mBottomSheetBinding.bottomSheet)
         initViews()
-        bottomSheetBehaviourCallback()
     }
 
     override fun onStart() {
@@ -156,6 +155,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
         if (mFusedLocationProviderClient != null) mFusedLocationProviderClient!!.removeLocationUpdates(mLocationCallback)
     }
 
+    override fun onBackPressed() {
+        if (mBottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED)
+            mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED)
+        else
+            super.onBackPressed()
+    }
+
     private fun showPlaceDetails(position: LatLng) {
         for (placeInfo in mPlaceInfoList!!) {
             val place = LatLng(placeInfo.geometry.location.lat,
@@ -227,22 +233,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
         }
     }
 
-    private fun bottomSheetBehaviourCallback() {
-        mBottomSheetBehavior.addBottomSheetCallback(object : BottomSheetCallback() {
-            override fun onStateChanged(bottomSheet: View, newState: Int) {}
-            override fun onSlide(bottomSheet: View, slideOffset: Float) {
-                mBottomSheetBinding.headerArrow.rotation = slideOffset * 180
-            }
-        })
-    }
-
     private fun initViews() {
-        mBottomSheetBinding.headerArrow.setOnClickListener {
-            if (mBottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED)
-                mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED)
-            else
-                mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED)
-        }
         mBinding.autoCompleteTextView.setAdapter(mSearchPlacesAutoCompleteAdapter)
 
         mAutoCompleteListener = AdapterView.OnItemClickListener { _, _, position, _ ->
@@ -253,7 +244,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
 
         mBinding.autoCompleteTextView.onItemClickListener = mAutoCompleteListener
 
-        mBottomSheetBinding.button.setOnClickListener {
+        mBottomSheetBinding.detailsFab.setOnClickListener {
             for (polyline in mPolyLines){
                 polyline.remove()
             }
