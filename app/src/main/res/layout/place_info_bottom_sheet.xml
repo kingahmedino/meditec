@@ -37,11 +37,10 @@
             android:id="@+id/place_address_tv"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
             android:text="@{placeInfo.vicinity}"
             android:textAppearance="@style/TextAppearance.AppCompat.Medium"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/place_name_tv"
             app:layout_constraintTop_toBottomOf="@+id/place_name_tv" />
 
         <ImageView
