@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/directions_sheet"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/colorWhite"
+        app:behavior_peekHeight="0dp"
+        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+
+        <ImageButton
+            android:id="@+id/imageButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="24dp"
+            android:background="@color/colorWhite"
+            android:src="@drawable/ic_close"
+            android:tint="@color/colorBlack"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/duration_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="15 min"
+            android:textColor="@color/colorBlack"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="@+id/imageButton"
+            app:layout_constraintTop_toBottomOf="@+id/imageButton" />
+
+        <TextView
+            android:id="@+id/distance_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="(1.2 km)"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="@+id/duration_tv"
+            app:layout_constraintStart_toEndOf="@+id/duration_tv"
+            app:layout_constraintTop_toTopOf="@+id/duration_tv" />
+
+        <TextView
+            android:id="@+id/textView3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Steps"
+            android:textColor="@color/colorBlack"
+            android:textSize="18sp"
+            app:layout_constraintStart_toStartOf="@+id/imageButton"
+            app:layout_constraintTop_toBottomOf="@+id/duration_tv" />
+
+        <ImageButton
+            android:id="@+id/walk_image_button"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@drawable/circular_background"
+            android:elevation="4dp"
+            android:src="@drawable/ic_walk"
+            android:tint="@color/colorBlack"
+            app:layout_constraintBottom_toBottomOf="@+id/duration_tv"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/bus_image_button"
+            app:layout_constraintTop_toTopOf="@+id/duration_tv" />
+
+        <ImageButton
+            android:id="@+id/bus_image_button"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@drawable/circular_background"
+            android:elevation="4dp"
+            android:src="@drawable/ic_bus"
+            android:tint="@color/colorBlack"
+            app:layout_constraintBottom_toBottomOf="@+id/duration_tv"
+            app:layout_constraintEnd_toStartOf="@+id/walk_image_button"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/car_image_button"
+            app:layout_constraintTop_toTopOf="@+id/duration_tv" />
+
+        <ImageButton
+            android:id="@+id/car_image_button"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="90dp"
+            android:background="@drawable/circular_background"
+            android:elevation="4dp"
+            android:src="@drawable/ic_car"
+            android:tint="@color/colorBlack"
+            app:layout_constraintBottom_toBottomOf="@+id/duration_tv"
+            app:layout_constraintEnd_toStartOf="@+id/bus_image_button"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/distance_tv"
+            app:layout_constraintTop_toTopOf="@+id/duration_tv" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/textView3"
+            app:layout_constraintTop_toBottomOf="@+id/textView3"
+            tools:itemCount="5"
+            tools:listitem="@layout/directions_item" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</layout>
