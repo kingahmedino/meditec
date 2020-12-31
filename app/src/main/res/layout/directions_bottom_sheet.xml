@@ -116,6 +116,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="@+id/textView3"
             app:layout_constraintTop_toBottomOf="@+id/textView3"
+            stepList="@{route.legs.get(0).steps}"
             tools:itemCount="5"
             tools:listitem="@layout/directions_item" />
 
