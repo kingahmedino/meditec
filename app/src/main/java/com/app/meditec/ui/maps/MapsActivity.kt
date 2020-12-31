@@ -137,17 +137,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
                 polylineOptions.addAll(route.polyLines)
                 mPolyLines.add(mGoogleMap!!.addPolyline(polylineOptions))
             }
-            openDirectionsSheet()
+            mDirectionSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
             mDirectionsSheetBinding.route = routes[0]
         })
         mMapsViewModel.responseStatus.observe(this, Observer { placeResponseStatus ->
             showToast(placeResponseStatus)
         })
-    }
-
-    private fun openDirectionsSheet() {
-        mBinding.autoCompleteTextView.visibility = View.INVISIBLE
-        mDirectionSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
     }
 
     override fun GPSIsEnabled() {
@@ -177,7 +172,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
             mBottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED ->
                 mBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
             mDirectionSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED ->
-                closeDirectionsSheet()
+                mDirectionSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
             else ->
                 super.onBackPressed()
         }
@@ -266,7 +261,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
         mBinding.autoCompleteTextView.onItemClickListener = mAutoCompleteListener
 
         mDirectionsSheetBinding.closeImageButton.setOnClickListener {
-            closeDirectionsSheet()
+            mDirectionSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
         }
 
         mBottomSheetBinding.detailsFab.setOnClickListener { mMapsViewModel.onClickGoFab() }
@@ -274,11 +269,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
         mDirectionsSheetBinding.carImageButton.setOnClickListener { mMapsViewModel.onDriveImageButton() }
         mDirectionsSheetBinding.walkImageButton.setOnClickListener { mMapsViewModel.onWalkImageButton() }
 
-    }
-
-    private fun closeDirectionsSheet() {
-        mBinding.autoCompleteTextView.visibility = View.VISIBLE
-        mDirectionSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
     }
 
     private fun getPlaceWith(placeId: String?) {
@@ -297,17 +287,22 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
 
     private fun bottomSheetCallback() {
         mBottomSheetBehavior.addBottomSheetCallback(object : BottomSheetCallback() {
-            override fun onSlide(bottomSheet: View, slideOffset: Float) {
-
-            }
-
+            override fun onSlide(bottomSheet: View, slideOffset: Float) {}
             override fun onStateChanged(bottomSheet: View, newState: Int) {
                 if (newState != BottomSheetBehavior.STATE_COLLAPSED)
                     mGoogleMap!!.setPadding(0, 0, 0, bottomSheet.height)
                 else
                     mGoogleMap!!.setPadding(0, 0, 0, 0)
             }
-
+        })
+        mDirectionSheetBehavior.addBottomSheetCallback(object : BottomSheetCallback() {
+            override fun onSlide(bottomSheet: View, slideOffset: Float) {}
+            override fun onStateChanged(bottomSheet: View, newState: Int) {
+                if (newState == BottomSheetBehavior.STATE_COLLAPSED)
+                    mBinding.autoCompleteTextView.visibility = View.VISIBLE
+                else
+                    mBinding.autoCompleteTextView.visibility = View.INVISIBLE
+            }
         })
     }
 
