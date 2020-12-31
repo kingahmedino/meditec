@@ -127,7 +127,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
             }
         })
         mMapsViewModel.routeLiveData.observe(this, Observer { routes ->
-            for (route in routes){
+            for (route in routes) {
                 val polylineOptions = PolylineOptions()
                 polylineOptions.color(resources.getColor(R.color.colorAccent))
                 polylineOptions.width(7f)
@@ -166,10 +166,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
     }
 
     override fun onBackPressed() {
-        if (mBottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED)
-            mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED)
-        else
-            super.onBackPressed()
+        when {
+            mBottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED ->
+                mBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+            mDirectionSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED ->
+                closeDirectionsSheet()
+            else ->
+                super.onBackPressed()
+        }
     }
 
     private fun showPlaceDetails(position: LatLng) {
@@ -255,7 +259,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
         mBinding.autoCompleteTextView.onItemClickListener = mAutoCompleteListener
 
         mBottomSheetBinding.detailsFab.setOnClickListener {
-            for (polyline in mPolyLines){
+            for (polyline in mPolyLines) {
                 polyline.remove()
             }
             mPolyLines.clear()
@@ -263,6 +267,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
             mMapsViewModel.getDirections(latLng, mCurrentlySelectedPlace!!.place_id)
             mBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
         }
+
+        mDirectionsSheetBinding.closeImageButton.setOnClickListener {
+            closeDirectionsSheet()
+        }
+    }
+
+    private fun closeDirectionsSheet() {
+        mBinding.autoCompleteTextView.visibility = View.VISIBLE
+        mDirectionSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
     }
 
     private fun getPlaceWith(placeId: String?) {
@@ -284,6 +297,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
             override fun onSlide(bottomSheet: View, slideOffset: Float) {
 
             }
+
             override fun onStateChanged(bottomSheet: View, newState: Int) {
                 if (newState != BottomSheetBehavior.STATE_COLLAPSED)
                     mGoogleMap!!.setPadding(0, 0, 0, bottomSheet.height)
