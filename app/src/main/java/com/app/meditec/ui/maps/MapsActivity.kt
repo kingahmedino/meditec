@@ -20,6 +20,7 @@ import com.app.meditec.BuildConfig
 import com.app.meditec.R
 import com.app.meditec.adapters.SearchPlacesAutoCompleteAdapter
 import com.app.meditec.databinding.ActivityMapBinding
+import com.app.meditec.databinding.DirectionsBottomSheetBinding
 import com.app.meditec.databinding.PlaceInfoBottomSheetBinding
 import com.app.meditec.models.PlaceInfo
 import com.app.meditec.utils.MapUtils
@@ -39,6 +40,7 @@ import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetBehavior.BottomSheetCallback
+import com.google.android.material.bottomsheet.BottomSheetBehavior.from
 import java.util.*
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsListener {
@@ -55,9 +57,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
     private var mCurrentlySelectedPlace: PlaceInfo? = null
     private val mPolyLines = mutableListOf<Polyline>()
     private lateinit var mBottomSheetBehavior: BottomSheetBehavior<*>
+    private lateinit var mDirectionSheetBehavior: BottomSheetBehavior<*>
     private lateinit var mMapsViewModel: MapsViewModel
     private lateinit var mBinding: ActivityMapBinding
     private lateinit var mBottomSheetBinding: PlaceInfoBottomSheetBinding
+    private lateinit var mDirectionsSheetBinding: DirectionsBottomSheetBinding
     private lateinit var mAutoCompleteListener: AdapterView.OnItemClickListener
     private lateinit var mSearchPlacesAutoCompleteAdapter: SearchPlacesAutoCompleteAdapter
 
@@ -67,6 +71,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
         PermissionUtils.setListener(this)
         mMapsViewModel = ViewModelProvider(this).get(MapsViewModel::class.java)
         mBottomSheetBinding = mBinding.bottomSheet
+        mDirectionsSheetBinding = mBinding.directionsSheet
         mLocationPermissionGranted = PermissionUtils.getLocationPermission(this)
         if (mLocationPermissionGranted) initializeMap()
         createLocationCallback()
@@ -75,7 +80,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
         mToken = AutocompleteSessionToken.newInstance()
         mSearchPlacesAutoCompleteAdapter = SearchPlacesAutoCompleteAdapter(this, mPlacesClient!!, mToken!!)
         mPlaceInfoList = ArrayList()
-        mBottomSheetBehavior = BottomSheetBehavior.from(mBottomSheetBinding.bottomSheet)
+        mBottomSheetBehavior = from(mBottomSheetBinding.bottomSheet)
+        mDirectionSheetBehavior = from(mDirectionsSheetBinding.directionsSheet)
         initViews()
         bottomSheetCallback()
     }
@@ -128,6 +134,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
                 polylineOptions.addAll(route.polyLines)
                 mPolyLines.add(mGoogleMap!!.addPolyline(polylineOptions))
             }
+            mBinding.autoCompleteTextView.visibility = View.INVISIBLE
+            mDirectionSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+            mDirectionsSheetBinding.route = routes[0]
         })
         mMapsViewModel.responseStatus.observe(this, Observer { placeResponseStatus ->
             showToast(placeResponseStatus)
