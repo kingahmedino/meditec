@@ -53,7 +53,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
     private var mPlaceInfoList: List<PlaceInfo>? = null
     private var mPlacesClient: PlacesClient? = null
     private var mToken: AutocompleteSessionToken? = null
-    private var mMapView: View? = null
     private val mPolyLines = mutableListOf<Polyline>()
     private lateinit var mBottomSheetBehavior: BottomSheetBehavior<*>
     private lateinit var mDirectionSheetBehavior: BottomSheetBehavior<*>
@@ -155,7 +154,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
         mGoogleMap = googleMap
         mGoogleMap!!.isMyLocationEnabled = true
         mGoogleMap!!.uiSettings.isMyLocationButtonEnabled = true
-        moveLocationButtonLower()
+        mGoogleMap!!.setPadding(0, 150, 0, 0)
         mGoogleMap!!.setOnMarkerClickListener { marker: Marker ->
             showPlaceDetails(marker.position)
             false
@@ -194,18 +193,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
 
     private fun initializeMap() {
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment?
-        mMapView = mapFragment!!.requireView()
-        mapFragment.getMapAsync(this)
-    }
-
-    private fun moveLocationButtonLower() {
-        if (mMapView != null && mMapView!!.findViewById<View>("1".toInt()) != null) {
-            val locationButton = (mMapView!!.findViewById<View>("1".toInt()).parent as View)
-                    .findViewById<View>("2".toInt())
-            val layoutParams = locationButton.layoutParams as RelativeLayout.LayoutParams
-            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP, 0)
-            layoutParams.setMargins(0, 140, 40, 0)
-        }
+        mapFragment!!.getMapAsync(this)
     }
 
     private fun moveCamera(latLng: LatLng) {
@@ -290,9 +278,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
             override fun onSlide(bottomSheet: View, slideOffset: Float) {}
             override fun onStateChanged(bottomSheet: View, newState: Int) {
                 if (newState != BottomSheetBehavior.STATE_COLLAPSED)
-                    mGoogleMap!!.setPadding(0, 0, 0, bottomSheet.height)
+                    mGoogleMap!!.setPadding(0, 150, 0, bottomSheet.height)
                 else
-                    mGoogleMap!!.setPadding(0, 0, 0, 0)
+                    mGoogleMap!!.setPadding(0, 150, 0, 0)
             }
         })
         mDirectionSheetBehavior.addBottomSheetCallback(object : BottomSheetCallback() {
