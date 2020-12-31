@@ -77,6 +77,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
         mPlaceInfoList = ArrayList()
         mBottomSheetBehavior = BottomSheetBehavior.from(mBottomSheetBinding.bottomSheet)
         initViews()
+        bottomSheetCallback()
     }
 
     override fun onStart() {
@@ -267,6 +268,21 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
                 showToast("An error occurred, place not found")
             }
         }
+    }
+
+    private fun bottomSheetCallback() {
+        mBottomSheetBehavior.addBottomSheetCallback(object : BottomSheetCallback() {
+            override fun onSlide(bottomSheet: View, slideOffset: Float) {
+
+            }
+            override fun onStateChanged(bottomSheet: View, newState: Int) {
+                if (newState != BottomSheetBehavior.STATE_COLLAPSED)
+                    mGoogleMap!!.setPadding(0, 0, 0, bottomSheet.height)
+                else
+                    mGoogleMap!!.setPadding(0, 0, 0, 0)
+            }
+
+        })
     }
 
     private fun showToast(message: String) {
