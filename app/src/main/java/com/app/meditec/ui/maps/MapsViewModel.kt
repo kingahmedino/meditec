@@ -1,5 +1,6 @@
 package com.app.meditec.ui.maps
 
+import android.location.Location
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -14,6 +15,14 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class MapsViewModel : ViewModel() {
+    var userCurrentLocation: Location? = null
+        set(value) {
+            field = value
+            if (value != null) {
+                getPlaces(value.latitude, value.longitude)
+            }
+        }
+    var currentlySelectedPlace: PlaceInfo? = null
     private val viewModelJob = Job()
     private val uiScope = CoroutineScope(Dispatchers.Main + viewModelJob)
     private val _placesLiveData = MutableLiveData<List<PlaceInfo>>()
@@ -34,7 +43,7 @@ class MapsViewModel : ViewModel() {
         viewModelJob.cancel()
     }
 
-    fun getPlaces(lat: Double, lng:Double) {
+    private fun getPlaces(lat: Double, lng:Double) {
         uiScope.launch {
             try {
                 _placesLiveData.postValue(MapsRepository.getPlaces(lat, lng))
@@ -44,7 +53,7 @@ class MapsViewModel : ViewModel() {
         }
     }
 
-    fun getDirections(currentLocation: LatLng, endPlaceId: String, mode: String = "driving"){
+    private fun getDirections(currentLocation: LatLng, endPlaceId: String, mode: String = "driving"){
         uiScope.launch {
             try {
                 _routesLiveData.postValue(MapsRepository.getDirections(currentLocation, endPlaceId, mode))
@@ -52,6 +61,27 @@ class MapsViewModel : ViewModel() {
                 _responseStatus.postValue("An error occurred.\nCheck your internet connection.")
             }
         }
+    }
+
+    fun onClickGoFab(){
+        Log.d("MapsViewModel", "onClickGoFab: Clicked")
+        val latLng = LatLng(userCurrentLocation!!.latitude, userCurrentLocation!!.longitude)
+        getDirections(latLng, currentlySelectedPlace!!.place_id)
+    }
+
+    fun onWalkImageButton(){
+        val latLng = LatLng(userCurrentLocation!!.latitude, userCurrentLocation!!.longitude)
+        getDirections(latLng, currentlySelectedPlace!!.place_id, "walking")
+    }
+
+    fun onTransitImageButton(){
+        val latLng = LatLng(userCurrentLocation!!.latitude, userCurrentLocation!!.longitude)
+        getDirections(latLng, currentlySelectedPlace!!.place_id, "transit")
+    }
+
+    fun onDriveImageButton(){
+        val latLng = LatLng(userCurrentLocation!!.latitude, userCurrentLocation!!.longitude)
+        getDirections(latLng, currentlySelectedPlace!!.place_id, "driving")
     }
 
 }

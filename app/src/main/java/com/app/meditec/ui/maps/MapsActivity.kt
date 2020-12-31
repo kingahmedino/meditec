@@ -54,7 +54,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
     private var mPlacesClient: PlacesClient? = null
     private var mToken: AutocompleteSessionToken? = null
     private var mMapView: View? = null
-    private var mCurrentlySelectedPlace: PlaceInfo? = null
     private val mPolyLines = mutableListOf<Polyline>()
     private lateinit var mBottomSheetBehavior: BottomSheetBehavior<*>
     private lateinit var mDirectionSheetBehavior: BottomSheetBehavior<*>
@@ -107,7 +106,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
                 super.onLocationResult(locationResult)
                 if (locationResult != null) {
                     mCurrentLocation = locationResult.lastLocation
-                    mMapsViewModel.getPlaces(mCurrentLocation!!.latitude, mCurrentLocation!!.longitude)
+                    mMapsViewModel.userCurrentLocation = locationResult.lastLocation
                     if (!isCameraMovedOnAppStart) {
                         isCameraMovedOnAppStart = true
                         moveCamera(LatLng(mCurrentLocation!!.latitude, mCurrentLocation!!.longitude))
@@ -127,6 +126,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
             }
         })
         mMapsViewModel.routeLiveData.observe(this, Observer { routes ->
+            mBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+            for (polyline in mPolyLines) polyline.remove()
+            mPolyLines.clear()
+
             for (route in routes) {
                 val polylineOptions = PolylineOptions()
                 polylineOptions.color(resources.getColor(R.color.colorAccent))
@@ -134,13 +137,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
                 polylineOptions.addAll(route.polyLines)
                 mPolyLines.add(mGoogleMap!!.addPolyline(polylineOptions))
             }
-            mBinding.autoCompleteTextView.visibility = View.INVISIBLE
-            mDirectionSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+            openDirectionsSheet()
             mDirectionsSheetBinding.route = routes[0]
         })
         mMapsViewModel.responseStatus.observe(this, Observer { placeResponseStatus ->
             showToast(placeResponseStatus)
         })
+    }
+
+    private fun openDirectionsSheet() {
+        mBinding.autoCompleteTextView.visibility = View.INVISIBLE
+        mDirectionSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
     }
 
     override fun GPSIsEnabled() {
@@ -182,7 +189,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
                     placeInfo.geometry.location.lng)
             if (place == position) {
                 mBottomSheetBinding.placeInfo = placeInfo
-                mCurrentlySelectedPlace = placeInfo
+                mMapsViewModel.currentlySelectedPlace = placeInfo
                 if (mBottomSheetBehavior.state == BottomSheetBehavior.STATE_COLLAPSED)
                     mBottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
                 break
@@ -258,19 +265,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
 
         mBinding.autoCompleteTextView.onItemClickListener = mAutoCompleteListener
 
-        mBottomSheetBinding.detailsFab.setOnClickListener {
-            for (polyline in mPolyLines) {
-                polyline.remove()
-            }
-            mPolyLines.clear()
-            val latLng = LatLng(mCurrentLocation!!.latitude, mCurrentLocation!!.longitude)
-            mMapsViewModel.getDirections(latLng, mCurrentlySelectedPlace!!.place_id)
-            mBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
-        }
-
         mDirectionsSheetBinding.closeImageButton.setOnClickListener {
             closeDirectionsSheet()
         }
+
+        mBottomSheetBinding.detailsFab.setOnClickListener { mMapsViewModel.onClickGoFab() }
+        mDirectionsSheetBinding.busImageButton.setOnClickListener { mMapsViewModel.onTransitImageButton() }
+        mDirectionsSheetBinding.carImageButton.setOnClickListener { mMapsViewModel.onDriveImageButton() }
+        mDirectionsSheetBinding.walkImageButton.setOnClickListener { mMapsViewModel.onWalkImageButton() }
+
     }
 
     private fun closeDirectionsSheet() {
