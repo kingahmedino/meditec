@@ -7,4 +7,6 @@
     <color name="colorBlack">#000000</color>
     <color name="positiveGreen">#0B6623</color>
     <color name="negativeRed">#FF0000</color>
+    <color name="tab_indicator_grey">#C0C0C0</color>
+    <color name="colorTransparent">#00000000</color>
 </resources>
