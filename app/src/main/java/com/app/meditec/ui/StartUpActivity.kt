@@ -64,6 +64,11 @@ class StartUpActivity : AppCompatActivity() {
             override fun onTabUnselected(tab: TabLayout.Tab) {}
             override fun onTabReselected(tab: TabLayout.Tab) {}
         })
+
+        mBinding.skipButton.setOnClickListener {
+            if (position != MapsRepository.getOnBoardingItems().size - 1)
+                loadLastScreen()
+        }
     }
 
     private fun loadLastScreen() {
