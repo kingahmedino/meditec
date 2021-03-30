@@ -2,6 +2,8 @@
 <layout>
 
     <data>
+        <import type="com.app.meditec.utils.StringFormatter"/>
+
         <variable
             name="step"
             type="com.app.meditec.models.Step" />
@@ -31,7 +33,7 @@
             android:layout_marginTop="4dp"
             android:layout_marginEnd="8dp"
             android:textSize="18sp"
-            android:text="@{step.instructions}"
+            android:text="@{StringFormatter.INSTANCE.removeAngleBrackets(step.instructions)}"
             android:textColor="@color/colorBlack"
             app:layout_constraintEnd_toStartOf="@+id/imageView"
             app:layout_constraintStart_toStartOf="@+id/distance_tv"
