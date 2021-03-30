@@ -1,10 +1,12 @@
 package com.app.meditec.repository
 
 import com.app.meditec.BuildConfig
+import com.app.meditec.R
 import com.app.meditec.api.DirectionsBackend
-import com.app.meditec.api.PlacesBackend
 import com.app.meditec.api.PlaceInfoResponse
+import com.app.meditec.api.PlacesBackend
 import com.app.meditec.api.RoutesResponse
+import com.app.meditec.models.OnBoardingItem
 import com.app.meditec.models.PlaceInfo
 import com.app.meditec.models.Route
 import com.google.android.gms.maps.model.LatLng
@@ -13,6 +15,7 @@ import okhttp3.ResponseBody
 import retrofit2.Response
 
 object MapsRepository {
+    private lateinit var mOnBoardingItems: MutableList<OnBoardingItem>
 
     suspend fun getPlaces(lat: Double, lng: Double): List<PlaceInfo>? {
         val url = PlacesBackend.BASE_URL +
@@ -60,5 +63,13 @@ object MapsRepository {
             }
         }
         return null
+    }
+
+    fun getOnBoardingItems(): List<OnBoardingItem> {
+        mOnBoardingItems = mutableListOf()
+        mOnBoardingItems.add(OnBoardingItem("Find hospitals", "Navigate your way to hospitals nearest to you", R.drawable.ic_map_locations))
+        mOnBoardingItems.add(OnBoardingItem("Get directions", "Find hospitals through step by step directions\nbased on your mode of travelling", R.drawable.ic_lady_locations))
+        mOnBoardingItems.add(OnBoardingItem("Meditec", "Get qualified doctors to attend to you", R.drawable.ic_doctors))
+        return mOnBoardingItems
     }
 }

@@ -136,7 +136,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionUtilsLis
                 mPolyLines.add(mGoogleMap!!.addPolyline(polylineOptions))
             }
             mDirectionSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
-            mDirectionsSheetBinding.route = routes[0]
+            if (routes.isNotEmpty()) mDirectionsSheetBinding.route = routes[0]
+            else showToast("No routes for that travel mode")
         })
         mMapsViewModel.responseStatus.observe(this, Observer { placeResponseStatus ->
             showToast(placeResponseStatus)
